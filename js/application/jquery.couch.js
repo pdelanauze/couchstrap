@@ -1,19 +1,3 @@
-
-// usage: log('inside coolFunc', this, arguments);
-// paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
-window.log = function(){
-  log.history = log.history || [];   // store logs to an array for reference
-  log.history.push(arguments);
-  if(this.console) {
-      arguments.callee = arguments.callee.caller;
-      console.log( Array.prototype.slice.call(arguments) );
-  }
-};
-// make it safe to use console.log always
-(function(b){function c(){}for(var d="assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(","),a;a=d.pop();)b[a]=b[a]||c})(window.console=window.console||{});
-
-
-// place any jQuery/helper plugins in here, instead of separate, slower script files.
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
 // use this file except in compliance with the License. You may obtain a copy of
 // the License at
@@ -36,25 +20,6 @@ window.log = function(){
       return "_design/" + encodeURIComponent(parts.join('/'));
     }
     return encodeURIComponent(docID);
-  };
-
-  function prepareUserDoc(user_doc, new_password) {
-    if (typeof hex_sha1 == "undefined") {
-      alert("creating a user doc requires sha1.js to be loaded in the page");
-      return;
-    }
-    var user_prefix = "org.couchdb.user:";
-    user_doc._id = user_doc._id || user_prefix + user_doc.name;
-    if (new_password) {
-      // handle the password crypto
-      user_doc.salt = $.couch.newUUID();
-      user_doc.password_sha = hex_sha1(new_password + user_doc.salt);
-    }
-    user_doc.type = "user";
-    if (!user_doc.roles) {
-      user_doc.roles = []
-    }
-    return user_doc;
   };
 
   var uuidCache = [];
@@ -86,7 +51,7 @@ window.log = function(){
         }
       }
       if (value === null) {
-        req.type = "DELETE";
+        req.type = "DELETE";        
       } else if (value !== undefined) {
         req.type = "PUT";
         req.data = toJSON(value);
@@ -98,13 +63,16 @@ window.log = function(){
         "An error occurred retrieving/updating the server configuration"
       );
     },
-
+    
     session: function(options) {
       options = options || {};
       $.ajax({
         type: "GET", url: this.urlPrefix + "/_session",
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('Accept', 'application/json');
+        },
         complete: function(req) {
-          var resp = $.httpData(req, "json");
+          var resp = httpData(req, "json");
           if (req.status == 200) {
             if (options.success) options.success(resp);
           } else if (options.error) {
@@ -125,13 +93,32 @@ window.log = function(){
       });
     },
 
-    signup: function(user_doc, password, options) {
+    signup: function(user_doc, password, options) {      
       options = options || {};
       // prepare user doc based on name and password
-      user_doc = prepareUserDoc(user_doc, password);
+      user_doc = this.prepareUserDoc(user_doc, password);
       $.couch.userDb(function(db) {
         db.saveDoc(user_doc, options);
-      })
+      });
+    },
+
+    prepareUserDoc: function(user_doc, new_password) {
+      if (typeof hex_sha1 == "undefined") {
+        alert("creating a user doc requires sha1.js to be loaded in the page");
+        return;
+      }
+      var user_prefix = "org.couchdb.user:";
+      user_doc._id = user_doc._id || user_prefix + user_doc.name;
+      if (new_password) {
+        // handle the password crypto
+        user_doc.salt = $.couch.newUUID();
+        user_doc.password_sha = hex_sha1(new_password + user_doc.salt);
+      }
+      user_doc.type = "user";
+      if (!user_doc.roles) {
+        user_doc.roles = [];
+      }
+      return user_doc;
     },
 
     login: function(options) {
@@ -139,8 +126,11 @@ window.log = function(){
       $.ajax({
         type: "POST", url: this.urlPrefix + "/_session", dataType: "json",
         data: {name: options.name, password: options.password},
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('Accept', 'application/json');
+        },
         complete: function(req) {
-          var resp = $.httpData(req, "json");
+          var resp = httpData(req, "json");
           if (req.status == 200) {
             if (options.success) options.success(resp);
           } else if (options.error) {
@@ -156,8 +146,11 @@ window.log = function(){
       $.ajax({
         type: "DELETE", url: this.urlPrefix + "/_session", dataType: "json",
         username : "_", password : "_",
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('Accept', 'application/json');
+        },
         complete: function(req) {
-          var resp = $.httpData(req, "json");
+          var resp = httpData(req, "json");
           if (req.status == 200) {
             if (options.success) options.success(resp);
           } else if (options.error) {
@@ -183,7 +176,7 @@ window.log = function(){
             doc._attachments["rev-"+doc._rev.split("-")[0]] = {
               content_type :"application/json",
               data : Base64.encode(rawDocs[doc._id].raw)
-            }
+            };
             return true;
           }
         }
@@ -401,7 +394,7 @@ window.log = function(){
             dataType: "json", data: toJSON(doc),
             beforeSend : beforeSend,
             complete: function(req) {
-              var resp = $.httpData(req, "json");
+              var resp = httpData(req, "json");
               if (req.status == 200 || req.status == 201 || req.status == 202) {
                 doc._id = resp.id;
                 doc._rev = resp.rev;
@@ -466,7 +459,7 @@ window.log = function(){
         copyDoc: function(docId, options, ajaxOptions) {
           ajaxOptions = $.extend(ajaxOptions, {
             complete: function(req) {
-              var resp = $.httpData(req, "json");
+              var resp = httpData(req, "json");
               if (req.status == 201) {
                 if (options.success) options.success(resp);
               } else if (options.error) {
@@ -555,7 +548,7 @@ window.log = function(){
 
         setDbProperty: function(propName, propValue, options, ajaxOptions) {
           ajax({
-            type: "PUT",
+            type: "PUT", 
             url: this.uri + propName + encodeOptions(options),
             data : JSON.stringify(propValue)
           },
@@ -567,7 +560,7 @@ window.log = function(){
       };
     },
 
-    encodeDocId: encodeDocId,
+    encodeDocId: encodeDocId, 
 
     info: function(options) {
       ajax(
@@ -579,7 +572,7 @@ window.log = function(){
 
     replicate: function(source, target, ajaxOptions, repOpts) {
       repOpts = $.extend({source: source, target: target}, repOpts);
-      if (repOpts.continuous) {
+      if (repOpts.continuous && !repOpts.cancel) {
         ajaxOptions.successStatus = 202;
       }
       ajax({
@@ -599,7 +592,7 @@ window.log = function(){
       if (!uuidCache.length) {
         ajax({url: this.urlPrefix + "/_uuids", data: {count: cacheNum}, async: false}, {
             success: function(resp) {
-              uuidCache = resp.uuids
+              uuidCache = resp.uuids;
             }
           },
           "Failed to retrieve UUID batch."
@@ -609,9 +602,36 @@ window.log = function(){
     }
   });
 
+  var httpData = $.httpData || function( xhr, type, s ) { // lifted from jq1.4.4
+    var ct = xhr.getResponseHeader("content-type") || "",
+      xml = type === "xml" || !type && ct.indexOf("xml") >= 0,
+      data = xml ? xhr.responseXML : xhr.responseText;
+
+    if ( xml && data.documentElement.nodeName === "parsererror" ) {
+      $.error( "parsererror" );
+    }
+    if ( s && s.dataFilter ) {
+      data = s.dataFilter( data, type );
+    }
+    if ( typeof data === "string" ) {
+      if ( type === "json" || !type && ct.indexOf("json") >= 0 ) {
+        data = $.parseJSON( data );
+      } else if ( type === "script" || !type && ct.indexOf("javascript") >= 0 ) {
+        $.globalEval( data );
+      }
+    }
+    return data;
+  };
+
   function ajax(obj, options, errorMessage, ajaxOptions) {
+
+    var defaultAjaxOpts = {
+      contentType: "application/json",
+      headers:{"Accept": "application/json"}
+    };
+
     options = $.extend({successStatus: 200}, options);
-    ajaxOptions = $.extend({contentType: "application/json"}, ajaxOptions);
+    ajaxOptions = $.extend(defaultAjaxOpts, ajaxOptions);
     errorMessage = errorMessage || "Unknown error";
     $.ajax($.extend($.extend({
       type: "GET", dataType: "json", cache : !$.browser.msie,
@@ -624,7 +644,7 @@ window.log = function(){
       },
       complete: function(req) {
         try {
-          var resp = $.httpData(req, "json");
+          var resp = httpData(req, "json");
         } catch(e) {
           if (options.error) {
             options.error(req.status, req, e);
@@ -654,6 +674,7 @@ window.log = function(){
       var commit = options.ensure_full_commit;
       delete options.ensure_full_commit;
       return function(xhr) {
+        xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader("X-Couch-Full-Commit", commit.toString());
       };
     }
@@ -682,207 +703,3 @@ window.log = function(){
   }
 
 })(jQuery);
-
-/*
- * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
- * in FIPS PUB 180-1
- * Version 2.1a Copyright Paul Johnston 2000 - 2002.
- * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
- * Distributed under the BSD License
- * See http://pajhome.org.uk/crypt/md5 for details.
- */
-
-/*
- * Configurable variables. You may need to tweak these to be compatible with
- * the server-side, but the defaults work in most cases.
- */
-var hexcase = 0;  /* hex output format. 0 - lowercase; 1 - uppercase        */
-var b64pad  = "="; /* base-64 pad character. "=" for strict RFC compliance   */
-var chrsz   = 8;  /* bits per input character. 8 - ASCII; 16 - Unicode      */
-
-/*
- * These are the functions you'll usually want to call
- * They take string arguments and return either hex or base-64 encoded strings
- */
-function hex_sha1(s){return binb2hex(core_sha1(str2binb(s),s.length * chrsz));}
-function b64_sha1(s){return binb2b64(core_sha1(str2binb(s),s.length * chrsz));}
-function str_sha1(s){return binb2str(core_sha1(str2binb(s),s.length * chrsz));}
-function hex_hmac_sha1(key, data){ return binb2hex(core_hmac_sha1(key, data));}
-function b64_hmac_sha1(key, data){ return binb2b64(core_hmac_sha1(key, data));}
-function str_hmac_sha1(key, data){ return binb2str(core_hmac_sha1(key, data));}
-
-/*
- * Perform a simple self-test to see if the VM is working
- */
-function sha1_vm_test()
-{
-  return hex_sha1("abc") == "a9993e364706816aba3e25717850c26c9cd0d89d";
-}
-
-/*
- * Calculate the SHA-1 of an array of big-endian words, and a bit length
- */
-function core_sha1(x, len)
-{
-  /* append padding */
-  x[len >> 5] |= 0x80 << (24 - len % 32);
-  x[((len + 64 >> 9) << 4) + 15] = len;
-
-  var w = Array(80);
-  var a =  1732584193;
-  var b = -271733879;
-  var c = -1732584194;
-  var d =  271733878;
-  var e = -1009589776;
-
-  for(var i = 0; i < x.length; i += 16)
-  {
-    var olda = a;
-    var oldb = b;
-    var oldc = c;
-    var oldd = d;
-    var olde = e;
-
-    for(var j = 0; j < 80; j++)
-    {
-      if(j < 16) w[j] = x[i + j];
-      else w[j] = rol(w[j-3] ^ w[j-8] ^ w[j-14] ^ w[j-16], 1);
-      var t = safe_add(safe_add(rol(a, 5), sha1_ft(j, b, c, d)),
-                       safe_add(safe_add(e, w[j]), sha1_kt(j)));
-      e = d;
-      d = c;
-      c = rol(b, 30);
-      b = a;
-      a = t;
-    }
-
-    a = safe_add(a, olda);
-    b = safe_add(b, oldb);
-    c = safe_add(c, oldc);
-    d = safe_add(d, oldd);
-    e = safe_add(e, olde);
-  }
-  return Array(a, b, c, d, e);
-
-}
-
-/*
- * Perform the appropriate triplet combination function for the current
- * iteration
- */
-function sha1_ft(t, b, c, d)
-{
-  if(t < 20) return (b & c) | ((~b) & d);
-  if(t < 40) return b ^ c ^ d;
-  if(t < 60) return (b & c) | (b & d) | (c & d);
-  return b ^ c ^ d;
-}
-
-/*
- * Determine the appropriate additive constant for the current iteration
- */
-function sha1_kt(t)
-{
-  return (t < 20) ?  1518500249 : (t < 40) ?  1859775393 :
-         (t < 60) ? -1894007588 : -899497514;
-}
-
-/*
- * Calculate the HMAC-SHA1 of a key and some data
- */
-function core_hmac_sha1(key, data)
-{
-  var bkey = str2binb(key);
-  if(bkey.length > 16) bkey = core_sha1(bkey, key.length * chrsz);
-
-  var ipad = Array(16), opad = Array(16);
-  for(var i = 0; i < 16; i++)
-  {
-    ipad[i] = bkey[i] ^ 0x36363636;
-    opad[i] = bkey[i] ^ 0x5C5C5C5C;
-  }
-
-  var hash = core_sha1(ipad.concat(str2binb(data)), 512 + data.length * chrsz);
-  return core_sha1(opad.concat(hash), 512 + 160);
-}
-
-/*
- * Add integers, wrapping at 2^32. This uses 16-bit operations internally
- * to work around bugs in some JS interpreters.
- */
-function safe_add(x, y)
-{
-  var lsw = (x & 0xFFFF) + (y & 0xFFFF);
-  var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
-  return (msw << 16) | (lsw & 0xFFFF);
-}
-
-/*
- * Bitwise rotate a 32-bit number to the left.
- */
-function rol(num, cnt)
-{
-  return (num << cnt) | (num >>> (32 - cnt));
-}
-
-/*
- * Convert an 8-bit or 16-bit string to an array of big-endian words
- * In 8-bit function, characters >255 have their hi-byte silently ignored.
- */
-function str2binb(str)
-{
-  var bin = Array();
-  var mask = (1 << chrsz) - 1;
-  for(var i = 0; i < str.length * chrsz; i += chrsz)
-    bin[i>>5] |= (str.charCodeAt(i / chrsz) & mask) << (32 - chrsz - i%32);
-  return bin;
-}
-
-/*
- * Convert an array of big-endian words to a string
- */
-function binb2str(bin)
-{
-  var str = "";
-  var mask = (1 << chrsz) - 1;
-  for(var i = 0; i < bin.length * 32; i += chrsz)
-    str += String.fromCharCode((bin[i>>5] >>> (32 - chrsz - i%32)) & mask);
-  return str;
-}
-
-/*
- * Convert an array of big-endian words to a hex string.
- */
-function binb2hex(binarray)
-{
-  var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
-  var str = "";
-  for(var i = 0; i < binarray.length * 4; i++)
-  {
-    str += hex_tab.charAt((binarray[i>>2] >> ((3 - i%4)*8+4)) & 0xF) +
-           hex_tab.charAt((binarray[i>>2] >> ((3 - i%4)*8  )) & 0xF);
-  }
-  return str;
-}
-
-/*
- * Convert an array of big-endian words to a base-64 string
- */
-function binb2b64(binarray)
-{
-  var tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  var str = "";
-  for(var i = 0; i < binarray.length * 4; i += 3)
-  {
-    var triplet = (((binarray[i   >> 2] >> 8 * (3 -  i   %4)) & 0xFF) << 16)
-                | (((binarray[i+1 >> 2] >> 8 * (3 - (i+1)%4)) & 0xFF) << 8 )
-                |  ((binarray[i+2 >> 2] >> 8 * (3 - (i+2)%4)) & 0xFF);
-    for(var j = 0; j < 4; j++)
-    {
-      if(i * 8 + j * 6 > binarray.length * 32) str += b64pad;
-      else str += tab.charAt((triplet >> 6*(3-j)) & 0x3F);
-    }
-  }
-  return str;
-}
-
