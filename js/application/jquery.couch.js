@@ -10,7 +10,7 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
-define(['./jquery.min'], function($){
+define(['jquery'], function($){
 
 (function($) {
   $.couch = $.couch || {};
