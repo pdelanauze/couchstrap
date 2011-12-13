@@ -14,7 +14,7 @@ require([
   'underscore',
   'backbone',
   'application/backbone-couchdb'
-], function ($, jQueryCouch, sha1, underscore, backbone, backboneCouchDb) {
+], function ($, jQueryCouch, sha1, plugins, _, backbone, backboneCouchDb) {
 
   console.log(arguments);
 
