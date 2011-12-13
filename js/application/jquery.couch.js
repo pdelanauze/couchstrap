@@ -10,6 +10,8 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
+define(['./jquery.min'], function($){
+
 (function($) {
   $.couch = $.couch || {};
 
@@ -703,3 +705,4 @@
   }
 
 })(jQuery);
+});

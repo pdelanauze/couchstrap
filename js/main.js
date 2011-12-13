@@ -1,10 +1,20 @@
+require.config({
+  paths: {
+    'jquery': 'application/jquery.min',
+    'underscore': 'application/underscore',
+    'backbone': 'application/backbone'
+  }
+});
+
 require([
-  'application/jquery.min',
+  'jquery',
   'application/jquery.couch',
   'application/sha1',
-  'application/plugins'
-], function(){
+  'application/plugins',
+  'underscore',
+  'backbone'
+], function ($, jQueryCouch, sha1, underscore, backbone) {
 
-  
+  console.log(arguments);
 
 });
