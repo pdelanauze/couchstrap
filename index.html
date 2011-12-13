@@ -16,25 +16,80 @@
     <script src='js/modernizr.min.js'></script>
   </head>
   <body>
-    <div id='container'>
-      <header></header>
-      <div id='main' role='main'>
 
-        <p>Hello world!</p>
+  <!-- Topbar
+ ================================================== -->
+  <div class="topbar" data-scrollspy="scrollspy">
+    <div class="topbar-inner">
+      <div class="container">
+        <a class="brand" href="#">CouchApp boilerplate</a>
+        <ul class="nav">
+          <li class="active"><a href="#quickstart">Quickstart</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Masthead (blueprinty thing)
+ ================================================== -->
+  <header class="jumbotron masthead" id="overview">
+    <div class="inner">
+      <div class="container">
+        <h1>CouchApp boilerplate</h1>
+
+        <p class="lead">
+          This application skeleton helps reduce couchapp application setup time. The project includes the html5
+          boilerplate reset, bootstrap (sass version), requirejs, backbonejs, modernizr, webshims, as well as a
+          backbone couch connector.
+        </p>
 
       </div>
-      <footer></footer>
+      <!-- /container -->
     </div>
-    <!--<script src='js/require.js?v=1'></script>-->
-    <!--<script src='js/main.all.min.js?v=1'></script>-->
-    <script src='js/require.js?v=1' data-main="js/main.js"></script>
-    <script type='text/javascript'>
-      //<![CDATA[
-        /*var _gaq=[["_setAccount","UA-XXXXX-X"],["_trackPageview"],["_trackPageLoadTime"]];
-        (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.async=1;
-        g.src=("https:"==location.protocol?"//ssl":"//www")+".google-analytics.com/ga.js";
-        s.parentNode.insertBefore(g,s)}(document,"script"));*/
-      //]]>
-    </script>
+  </header>
+
+  <!-- Quickstart options
+ ================================================== -->
+  <div class="quickstart">
+    <div class="container">
+      <h2>Quickstart</h2>
+      <div class="row">
+        <div class="span5">
+          <h6>Clone the project</h6>
+
+          <p>You'll need the soca gem:
+            <br />
+            <code>gem install soca</code>
+          </p>
+          <p>git clone </p>
+
+        </div>
+        <div class="span5">
+          <h6>Update your .couchapprc</h6>
+
+          <p>Point it to your couchdb instance.</p>
+
+        </div>
+        <div class="span5">
+          <h6>Build</h6>
+
+          <p>Forget about that crappy setup time, just develop.</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--<script src='js/require.js?v=1'></script>-->
+  <!--<script src='js/main.all.min.js?v=1'></script>-->
+  <script src='js/require.js?v=1' data-main="js/main.js"></script>
+  <script type='text/javascript'>
+    //<![CDATA[
+    /*var _gaq=[["_setAccount","UA-XXXXX-X"],["_trackPageview"],["_trackPageLoadTime"]];
+     (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.async=1;
+     g.src=("https:"==location.protocol?"//ssl":"//www")+".google-analytics.com/ga.js";
+     s.parentNode.insertBefore(g,s)}(document,"script"));*/
+    //]]>
+  </script>
   </body>
 </html>
