@@ -1,8 +1,8 @@
 require.config({
-  paths: {
-    'jquery': 'application/jquery.min',
-    'underscore': 'application/underscore',
-    'backbone': 'application/backbone'
+  paths:{
+    'jquery':'application/jquery.min',
+    'underscore':'application/underscore',
+    'backbone':'application/backbone'
   }
 });
 
@@ -12,9 +12,16 @@ require([
   'application/sha1',
   'application/plugins',
   'underscore',
-  'backbone'
-], function ($, jQueryCouch, sha1, underscore, backbone) {
+  'backbone',
+  'application/backbone-couchdb'
+], function ($, jQueryCouch, sha1, underscore, backbone, backboneCouchDb) {
 
   console.log(arguments);
+
+  _.templateSettings = {
+    evaluate    : /<%([\s\S]+?)%>/g,
+    interpolate : /<%-([\s\S]+?)%>/g,
+    escape      : /<%=([\s\S]+?)%>/g
+  };
 
 });
