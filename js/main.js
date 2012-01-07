@@ -18,6 +18,11 @@ require([
 
   console.log(arguments);
 
+  // TODO You need to configure these to point to the right database / couch application
+  Backbone.couch_connector.config.db_name = 'soca-sass-boilerplate';
+  Backbone.couch_connector.config.ddoc_name = 'soca-sass-boilerplate';
+  Backbone.couch_connector.config.view_name = 'by_type';
+
   _.templateSettings = {
     evaluate    : /<%([\s\S]+?)%>/g,
     interpolate : /<%-([\s\S]+?)%>/g,
