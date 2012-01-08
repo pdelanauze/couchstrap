@@ -2,7 +2,8 @@ require.config({
   paths:{
     'jquery':'application/jquery.min',
     'underscore':'application/underscore',
-    'backbone':'application/backbone'
+    'backbone':'application/backbone',
+    'backbone.marionette': 'application/backbone.marionette'
   }
 });
 
@@ -13,8 +14,9 @@ require([
   'application/plugins',
   'underscore',
   'backbone',
+  'backbone.marionette',
   'application/backbone-couchdb'
-], function ($, jQueryCouch, sha1, plugins, _, backbone, backboneCouchDb) {
+], function ($, jQueryCouch, sha1, plugins, _, Backbone, Marionette, backboneCouchDb) {
 
   console.log(arguments);
 
