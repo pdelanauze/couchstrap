@@ -4,7 +4,7 @@ require.config({
     'underscore':'application/underscore',
     'backbone':'application/backbone',
     'backbone.marionette': 'application/backbone.marionette',
-    'synapse': 'application/synapse'
+    'modelbinding': 'application/backbone.modelbinding'
   }
 });
 
@@ -17,11 +17,8 @@ require([
   'backbone',
   'backbone.marionette',
   'application/backbone-couchdb',
-  'synapse',
-  'synapse/hooks/jquery',
-  'synapse/hooks/backbone-model'
-], function ($, jQueryCouch, sha1, plugins, _, Backbone, Marionette, backboneCouchDb,
-        Synapse, jQueryHook, BackboneModelHook) {
+  'modelbinding'
+], function ($, jQueryCouch, sha1, plugins, _, Backbone, Marionette, backboneCouchDb, ModelBinding) {
 
   console.log(arguments);
 
@@ -36,8 +33,6 @@ require([
     interpolate : /<%-([\s\S]+?)%>/g,
     escape      : /<%=([\s\S]+?)%>/g
   };
-
-  Synapse.addHooks(jQueryHook, BackboneModelHook);
 
   var WebApp = new Marionette.Application();
   WebApp.addInitializer(function(options){
