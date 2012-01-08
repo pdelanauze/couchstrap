@@ -18,11 +18,10 @@ require([
   'backbone.marionette',
   'application/backbone-couchdb',
   'synapse',
-  'synapse/hooks/object',
   'synapse/hooks/jquery',
   'synapse/hooks/backbone-model'
 ], function ($, jQueryCouch, sha1, plugins, _, Backbone, Marionette, backboneCouchDb,
-        Synapse, ObjectHook, jQueryHook, BackboneModelHook) {
+        Synapse, jQueryHook, BackboneModelHook) {
 
   console.log(arguments);
 
@@ -36,6 +35,8 @@ require([
     interpolate : /<%-([\s\S]+?)%>/g,
     escape      : /<%=([\s\S]+?)%>/g
   };
+
+  Synapse.addHooks(jQueryHook, BackboneModelHook);
 
   var WebApp = new Marionette.Application();
   WebApp.addInitializer(function(options){
