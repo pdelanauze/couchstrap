@@ -3,7 +3,8 @@ require.config({
     'jquery':'application/jquery.min',
     'underscore':'application/underscore',
     'backbone':'application/backbone',
-    'backbone.marionette': 'application/backbone.marionette'
+    'backbone.marionette': 'application/backbone.marionette',
+    'synapse': 'application/synapse'
   }
 });
 
@@ -15,8 +16,13 @@ require([
   'underscore',
   'backbone',
   'backbone.marionette',
-  'application/backbone-couchdb'
-], function ($, jQueryCouch, sha1, plugins, _, Backbone, Marionette, backboneCouchDb) {
+  'application/backbone-couchdb',
+  'synapse',
+  'synapse/hooks/object',
+  'synapse/hooks/jquery',
+  'synapse/hooks/backbone-model'
+], function ($, jQueryCouch, sha1, plugins, _, Backbone, Marionette, backboneCouchDb,
+        Synapse, ObjectHook, jQueryHook, BackboneModelHook) {
 
   console.log(arguments);
 
