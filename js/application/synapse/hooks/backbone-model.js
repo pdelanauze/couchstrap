@@ -10,7 +10,7 @@
   } else {
     return root.BackboneModelHook = factory(root, {}, root.SynapseCore, root.Backbone);
   }
-})(this, function(root, BackboneModelHook, core) {
+})(this, function(root, BackboneModelHook, core, Backbone) {
   return {
     typeName: 'Backbone Model',
     checkObjectType: function(object) {
