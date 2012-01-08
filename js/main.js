@@ -29,6 +29,7 @@ require([
   Backbone.couch_connector.config.db_name = 'soca-sass-boilerplate';
   Backbone.couch_connector.config.ddoc_name = 'soca-sass-boilerplate';
   Backbone.couch_connector.config.view_name = 'by_type';
+  Backbone.couch_connector.config.global_changes = true;
 
   _.templateSettings = {
     evaluate    : /<%([\s\S]+?)%>/g,
