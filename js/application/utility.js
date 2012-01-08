@@ -1,4 +1,4 @@
-define('utility', ['jQuery'], function ($) {
+define('utility', ['jquery'], function ($) {
   var Utility = {
     DOM:{
       serializeObject:function (el) {
