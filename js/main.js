@@ -31,4 +31,11 @@ require([
     escape      : /<%=([\s\S]+?)%>/g
   };
 
+  var WebApp = new Marionette.Application();
+  WebApp.addInitializer(function(options){
+    console.log('Marionette App starting', arguments);
+  });
+
+  WebApp.start({});
+
 });
