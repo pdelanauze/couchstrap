@@ -17,67 +17,62 @@
   </head>
   <body>
 
-  <!-- Topbar
- ================================================== -->
-  <div class="topbar" data-scrollspy="scrollspy">
-    <div class="topbar-inner">
+  <div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
       <div class="container">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse" href="#">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </a>
         <a class="brand" href="#">CouchApp boilerplate</a>
-        <ul class="nav">
-          <li class="active"><a href="#quickstart">Quickstart</a></li>
-        </ul>
+        <div class="nav-collapse">
+          <ul class="nav">
+            <li class="active"><a href="#quickstart">Quickstart</a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Masthead (blueprinty thing)
- ================================================== -->
-  <header class="jumbotron masthead" id="overview">
-    <div class="inner">
-      <div class="container">
-        <h1>CouchApp boilerplate</h1>
+  <div class="container">
 
-        <p class="lead">
-          This application skeleton helps reduce couchapp application setup time. The project includes the html5
-          boilerplate reset, bootstrap (sass version), requirejs, backbonejs, modernizr, webshims, as well as a
-          backbone couch connector.
+    <div class="hero-unit">
+      <h1>CouchApp boilerplate</h1>
+
+      <p>
+        This application skeleton helps reduce couchapp application setup time. The project includes the html5
+        boilerplate reset, bootstrap (sass version), requirejs, backbonejs, modernizr, webshims, as well as a
+        backbone couch connector.
+      </p>
+    </div>
+
+    <div class="row">
+      <div class="span4">
+        <h2>Clone the project</h2>
+
+        <p>You'll need the soca gem:
+          <br/>
+          <code>gem install soca</code>
         </p>
 
+        <p>git clone </p>
+
       </div>
-      <!-- /container -->
-    </div>
-  </header>
+      <div class="span4">
+        <h2>Update your .couchapprc</h2>
 
-  <!-- Quickstart options
- ================================================== -->
-  <div class="quickstart">
-    <div class="container">
-      <h2>Quickstart</h2>
-      <div class="row">
-        <div class="span5">
-          <h6>Clone the project</h6>
+        <p>Point it to your couchdb instance.</p>
 
-          <p>You'll need the soca gem:
-            <br />
-            <code>gem install soca</code>
-          </p>
-          <p>git clone </p>
+      </div>
+      <div class="span4">
+        <h2>Build</h2>
 
-        </div>
-        <div class="span5">
-          <h6>Update your .couchapprc</h6>
+        <p>Forget about that crappy setup time, just develop.</p>
 
-          <p>Point it to your couchdb instance.</p>
-
-        </div>
-        <div class="span5">
-          <h6>Build</h6>
-
-          <p>Forget about that crappy setup time, just develop.</p>
-
-        </div>
       </div>
     </div>
+
   </div>
 
   <!--<script src='js/require.js?v=1'></script>-->
