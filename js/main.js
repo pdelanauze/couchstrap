@@ -15,10 +15,9 @@ require([
   'application/plugins',
   'underscore',
   'backbone',
-  'backbone.marionette',
   'application/backbone-couchdb',
   'modelbinding'
-], function ($, jQueryCouch, sha1, plugins, _, Backbone, Marionette, backboneCouchDb, ModelBinding) {
+], function ($, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, ModelBinding) {
 
   console.log(arguments);
 
@@ -33,12 +32,5 @@ require([
     interpolate : /<%-([\s\S]+?)%>/g,
     escape      : /<%=([\s\S]+?)%>/g
   };
-
-  var WebApp = new Marionette.Application();
-  WebApp.addInitializer(function(options){
-    console.log('Marionette App starting', arguments);
-  });
-
-  WebApp.start({});
 
 });
