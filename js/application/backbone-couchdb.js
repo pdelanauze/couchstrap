@@ -192,7 +192,7 @@ define(['underscore', 'backbone'], function(_, Backbone){
       opts = {
         include_docs: true,
         collection: con.helpers.extract_collection_name(this),
-        filters: "" + con.config.ddoc_name + "/by_collection"
+        filter: "" + con.config.ddoc_name + "/by_collection"
       };
       _.extend(opts, this.db);
       return _.defer(__bind(function() {
