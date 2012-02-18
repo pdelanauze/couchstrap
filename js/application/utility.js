@@ -31,14 +31,14 @@ define(['jquery', 'underscore'], function ($, _) {
       '</thead>' +
       '<tbody></tbody>';
 
-  Utility.Templates.FORM_STRUCTURE = '<form action="<%= action %>" method="<%= method %>"><fieldset>' +
+  Utility.Templates.FORM_STRUCTURE = '<form action="<%= action %>" method="<%= method %>" class="<%= formClass %>"><fieldset>' +
       '<% _.each(fields, function(field){ %>' +
       '<% if(field.type == "hidden"){ %>' +
       '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>" /> ' +
       '<% } else { %>' +
-      '<div class="clearfix input-outer-container <%= field.outerClass %>">' +
-      '<label for="<%= field.idPrefix %>-<%= recordId %>-<%= field.name%>"><%= field.humanName %></label>' +
-      '<div class="input <%= field.inputOuterClass %>">' +
+      '<div class="clearfix control-group <%= field.outerClass %>">' +
+      '<label class="control-label" for="<%= field.idPrefix %>-<%= recordId %>-<%= field.name%>"><%= field.humanName %></label>' +
+      '<div class="controls <%= field.inputOuterClass %>">' +
 
       '<% if(field.type == "text") { %>' +
       '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>"/> ' +
@@ -53,7 +53,7 @@ define(['jquery', 'underscore'], function ($, _) {
       '<% } %>' + // End the if type=='hidden'
       '<% }); %>'  +
 
-      '<div class="actions">' +
+      '<div class="form-actions">' +
       '<% _.each(buttons, function(button){ %>' +
       '<% if(button.type == "link"){ %>' +
       '<a class="btn <%= button.class %>" href="<%= button.href %>"><%= button.humanName %></a>&nbsp;' +
@@ -91,6 +91,7 @@ define(['jquery', 'underscore'], function ($, _) {
        action: '#/prescriptions/new',
        method: 'POST',
        recordId: this.model.get('id'),
+       class: 'form-horizontal',
        fields: [
          {
            idPrefix: 'field-type',
@@ -109,7 +110,7 @@ define(['jquery', 'underscore'], function ($, _) {
          }
        ],
        buttons: [
-         {'class': 'primary', type: 'submit', humanName: 'Submit'},
+         {'class': 'btn-primary', type: 'submit', humanName: 'Submit'},
          {type: 'reset', humanName: 'Reset'}
        ]
      };
@@ -126,6 +127,7 @@ define(['jquery', 'underscore'], function ($, _) {
     // Prep the defaults for the form structure
     _.defaults(formStructure, {
       action: '',
+      formClass: 'form-horizontal',
       method: 'POST',
       recordId: new Date().getTime(),
       fields: [],
