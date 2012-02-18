@@ -5,13 +5,15 @@ require.config({
     'backbone':'application/backbone',
     'backbone.marionette': 'application/backbone.marionette',
     'modelbinding': 'application/backbone.modelbinding',
-    'less': 'application/less-1.2.2'
+    'less': 'application/less-1.2.2',
+    'bootstrap': 'application/bootstrap'
   }
 });
 
 require([
   'jquery',
   'less',
+  'bootstrap',
   'application/jquery.couch',
   'application/sha1',
   'application/plugins',
@@ -19,7 +21,7 @@ require([
   'backbone',
   'application/backbone-couchdb',
   'modelbinding'
-], function ($, less, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, ModelBinding) {
+], function ($, less, boostrap, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, ModelBinding) {
 
   console.log(arguments);
 
