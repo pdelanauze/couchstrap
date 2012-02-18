@@ -32,11 +32,12 @@ define(['jquery', 'underscore'], function ($, _) {
       '<tbody></tbody>';
 
   Utility.Templates.FORM_STRUCTURE = '<form action="<%= action %>" method="<%= method %>" class="<%= formClass %>"><fieldset>' +
+      '<% if(legend){ %>' +
+      '<legend><%= legend %></legend>' +
+      '<% } %>' +
       '<% _.each(fields, function(field){ %>' +
-      '<% if(field.type == "hidden"){ %>' +
-      '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>" /> ' +
-      '<% } else { %>' +
-      '<div class="clearfix control-group <%= field.outerClass %>">' +
+      '<% if(field.type != "hidden"){ %>' +
+      '<div class="control-group <%= field.outerClass %>">' +
       '<label class="control-label" for="<%= field.idPrefix %>-<%= recordId %>-<%= field.name%>"><%= field.humanName %></label>' +
       '<div class="controls <%= field.inputOuterClass %>">' +
 
@@ -50,6 +51,8 @@ define(['jquery', 'underscore'], function ($, _) {
 
       '</div>' +
       '</div>' +
+      '<% } else { %>' +
+      '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>" /> ' +
       '<% } %>' + // End the if type=='hidden'
       '<% }); %>'  +
 
@@ -130,6 +133,7 @@ define(['jquery', 'underscore'], function ($, _) {
       formClass: 'form-horizontal',
       method: 'POST',
       recordId: new Date().getTime(),
+      legend: false,
       fields: [],
       buttons: []
     });
