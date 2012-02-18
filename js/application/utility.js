@@ -165,6 +165,9 @@ define(['jquery', 'underscore'], function ($, _) {
       });
     });
 
+    // Sort the fields according to their types so that the hidden ones are at the end
+    formStructure.fields = _.sortBy(formStructure.fields, function(f){ return f.type == 'hidden' ? 2 : 1 });
+
     return _.template(template, formStructure);
 
   };
