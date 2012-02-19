@@ -42,10 +42,28 @@ define(['jquery', 'underscore'], function ($, _) {
           '<label class="control-label" for="<%= field.idPrefix %>-<%= recordId %>-<%= field.name%>"><%= field.humanName %></label>' +
           '<div class="controls <%= field.inputOuterClass %>">' +
 
-          '<% if(field.type == "text") { %>' +
-          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>"/> ' +
-          '<% } else if (field.type == "textarea") { %>' +
+          '<% if(field.type == "textarea") { %>' +
           '<textarea class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" rows="<%= field.rows %>" name="<%= field.name %>"><%= field.value %></textarea>' +
+          '<% } else if (field.type == "select" || field.type == "select-multiple"){ %>' +
+          '<select class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" name="<%= field.name %>" <%= (field.type == \'select-multiple\') ? \'multiple="multiple"\' : \'\'%>> ' +
+          '<% _.each(field.options, function(option){ %>' +
+          '<% if (option.optgroup){ %>' +
+          '<optgroup label="<%= option.label %>">' +
+          '<% _.each(option.options, function(subOption){ %>' +
+          '<option value="<%= subOption.value %>" <%= (subOption.value == field.value || (_.isArray(field.value) && _.include(field.value, subOption.value))) ? \'selected="selected" \' : \'\' %>><%= subOption.label %></option> ' +
+          '<% }); %>' +
+          '</optgroup>' +
+          '<% } else { %>' +
+          '<option value="<%= option.value %>" <%= (option.value == field.value || (_.isArray(field.value) && _.include(field.value, option.value))) ? \'selected="selected" \' : \'\' %>><%= option.label %></option> ' +
+          '<% } %>' +
+          '<% }); %>' +
+          '</select>' +
+          '<% } else if (field.type == "checkbox"){ %>' +
+          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" checked="<%= (field.value ? \'checked\' : \'\') %>" name="<%= field.name %>" type="<%= field.type %>"/> ' +
+          '<% } else if (field.type == "number" || field.type == "range"){ %>' +
+          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>" max="<%= field.max %>" min="<%= field.min %>" step="<%= field.step %>"/> ' +
+          '<% } else { %>' +
+          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>"/> ' +
           '<% } %>' +
 
           '<span class="help-inline"></span>' +
@@ -94,35 +112,66 @@ define(['jquery', 'underscore'], function ($, _) {
    * - hidden
    * - text
    * - textarea
+   * - checkbox
+   * - select
+   * - select-multiple (alpha support)
+   * - number
+   * - range
+   * - email
+   * - search
+   * - tel
+   * - time
+   * - url
+   * - date
+   * - datetime
+   * - datetime-local
+   * - time
+   * - month
+   * - week
    *
    * Here is an example of a valid form structure:
    * var formStructure = {
-   action: '#/prescriptions/new',
-   method: 'POST',
-   recordId: this.model.get('id'),
-   class: 'form-horizontal',
-   fields: [
-   {
-   idPrefix: 'field-type',
-   name: 'id',
-   humanName: 'Id',
-   outerClass: '',
-   inputOuterClass: '',
-   value: this.model.get('id'),
-   type: 'hidden'
-   },
-   {
-   name: 'name',
-   humanName: 'Name',
-   value: this.model.get('name'),
-   type: 'text'
-   }
-   ],
-   buttons: [
-   {'class': 'btn-primary', type: 'submit', humanName: 'Submit'},
-   {type: 'reset', humanName: 'Reset'}
-   ]
-   };
+          action: '#/prescriptions/new',
+          method: 'POST',
+          recordId: this.model.get('id'),
+          class: 'form-horizontal',
+          fields: [
+            {
+              idPrefix: 'field-type',
+              name: 'id',
+              humanName: 'Id',
+              outerClass: '',
+              inputOuterClass: '',
+              value: this.model.get('id'),
+              type: 'hidden'
+            },
+            {
+              name: 'name',
+              humanName: 'Name',
+              value: this.model.get('name'),
+              type: 'text'
+            },
+           {
+             name: 'enabled',
+             humanName: 'Enabled ?',
+             value: this.model.get('enabled'),
+             type: 'checkbox'
+           },
+           {
+             name: 'quantity',
+             humanName: 'Quantity',
+             value: this.model.get('quantity'),
+             type: 'number',
+             min: 1,
+             max: 10,
+             step: 1
+           },
+          ],
+          buttons: [
+            {'class': 'btn-primary', type: 'submit', humanName: 'Submit'},
+            {type: 'reset', humanName: 'Reset'}
+          ]
+        };
    *
    * @param formStructure
    * @param template
@@ -158,6 +207,21 @@ define(['jquery', 'underscore'], function ($, _) {
 
       if (field.type == 'text' && !field.size) {
         field.size = 30;
+      } else if (field.type == 'select' || field.type == 'select-multiple'){
+        _.defaults(field, {
+          options: []
+        });
+      } else if (field.type.match(/^date.*/) || field.type == 'month' || field.type == 'week' || field.type == 'time') {
+        _.defaults(field, {
+          min:0,
+          max:0
+        });
+      } else if (field.type == 'number' || field.type == 'range') {
+        _.defaults(field, {
+          min:0,
+          max:0,
+          step:0
+        });
       } else if (field.type == 'textarea' && !field.rows) {
         field.rows = 4;
       }
@@ -209,12 +273,16 @@ define(['jquery', 'underscore'], function ($, _) {
       var value = jsonModel[key];
       var type = false;
 
-      if (_.isString(value) || _.isNumber(value) || !value) {
-        type = 'text';
+      if (key == 'id' || key == '_id'){
+        type = 'hidden';
       } else if (_.isBoolean(value)) {
         type = 'checkbox';
+      } else if (_.isString(value) || !value) {
+        type = 'text';
       } else if (_.isDate(value)) {
         type = 'datetime';
+      } else if (_.isNumber(value)) {
+        type = 'number';
       }
 
       if (type) {
