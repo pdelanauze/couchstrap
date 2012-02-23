@@ -289,7 +289,7 @@ define(['jquery', 'underscore'], function ($, _) {
         formStructure.fields.push({
           idPrefix:options.humanName,
           name:key,
-          humanName:(key.charAt(0).toUpperCase() + key.substring(1)),
+          humanName:(key.charAt(0).toUpperCase() + key.substring(1).replace('_', ' ')),
           outerClass:'',
           inputOuterClass:'',
           inputClass:'input-xlarge',
