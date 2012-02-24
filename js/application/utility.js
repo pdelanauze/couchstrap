@@ -29,8 +29,14 @@ define(['jquery', 'underscore'], function ($, _) {
           '<th class="<%= c.value %>"><%= c.name %></th>' +
           '<% }); %>' +
           '</tr>' +
+          '<tr>' +
+          '<td colspan="<%= columns.length + 1%>"><a style="display: none;" class="btn btn-large show-less" href="<%= showLess.href || \"#\"%>"><%= showLess.label || "Show less" %></a></td>' +
+          '</tr>' +
           '</thead>' +
-          '<tbody></tbody>';
+          '<tbody></tbody>' +
+          '<tfoot><tr>' +
+          '<td colspan="<%= columns.length + 1%>"><a style="display: none;" class="btn btn-large show-more" href="<%= showMore.href || \"#\"%>"><%= showMore.label || "Show more" %></a></td>' +
+          '</tr></tfoot>';
 
   Utility.Templates.FORM_STRUCTURE = '<form action="<%= action %>" method="<%= method %>" class="<%= formClass %>"><fieldset>' +
           '<% if(legend){ %>' +
@@ -100,6 +106,12 @@ define(['jquery', 'underscore'], function ($, _) {
     if (!template) {
       template = Utility.Templates.TABLE_STRUCTURE;
     }
+
+    _.defaults(structureData, {
+      showMore: false,
+      showLess: false,
+      columns: []
+    });
 
     return _.template(template, structureData);
 

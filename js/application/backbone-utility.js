@@ -84,7 +84,15 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
 
       // Pre-render
       $(this.el).html(Utility.Templates.renderTableStructure({
-        columns:this.columns
+        columns:this.columns,
+        showMore:{
+          label:'More ' + this.pluralModelName,
+          href:'#/' + this.pluralModelName + '/p2'
+        },
+        showLess:{
+          label:'Previous ' + this.pluralModelName,
+          href:'#/' + this.pluralModelName + '/p1'
+        }
       }));
 
     },
@@ -101,7 +109,8 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
         columns:this.columns,
         model:model
       }).render();
-      this.$('tbody:first').prepend(itemView.el);
+
+      this.$('tbody:first').append(itemView.el);
     },
 
     close:function () {
@@ -146,6 +155,37 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
       $(this.el).empty().html(t).find('.table-container:first').append(this.tableViewInstance.el);
 
       return this;
+    },
+    updateTableInfo:function (options) {
+
+      var hasMore = false;
+      var hasItemsNotShown = false;
+
+      if (options.limit && this.collection.length < options.limit) {
+        hasMore = true;
+      } else if (options.limit && options.page > 1 && this.collection.length < (options.limit * options.page)) {
+        hasItemsNotShown = true;
+      }
+
+      var href = '#/' + this.pluralModelName + '/p' + (options.page ? options.page + 1 : 2);
+      if (options.limit) {
+        href = href.concat('/l' + options.limit);
+      }
+
+      this.$('.btn.show-more').attr('href', href);
+
+      if (hasMore) {
+        this.$('.btn.show-more').hide();
+      } else {
+        this.$('.btn.show-more').show();
+      }
+
+      if (hasItemsNotShown) {
+        var lessHref = '#/' + this.pluralModelName + '/p' + (options.page - 1);
+        this.$('.btn.show-less').attr('href', lessHref).show();
+      } else {
+        this.$('.btn.show-less').hide();
+      }
     },
     close:function () {
       this.remove();
@@ -278,6 +318,9 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
     tableControlView:BackboneUtility.Views.TableControlView,
     modelEditView:BackboneUtility.Views.ModelEditView,
 
+    limit:20,
+    page:1,
+
     initialize:function (options) {
 
       _.extend(this, options);
@@ -293,6 +336,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
               'new-state');
 
       this.route(this.pluralModelName, 'listItems', this.listItems);
+      this.route(this.pluralModelName + '/*splat', 'listItemsSplat', this.listItems);
       this.route(this.pluralModelName + '/new', 'newItem', this.newItem);
       this.route(this.pluralModelName + '/:id/edit', 'editItem', this.editItem);
 
@@ -304,7 +348,46 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
     getParentElement:function () {
       return $(this.parentContainerSelector);
     },
-    listItems:function () {
+    listItems:function (query) {
+
+      var ctx = this;
+      var shouldAddToCollection = true;
+      if (query) {
+        var queries = query.split('/');
+        _.each(queries, function (q) {
+          var matches = q.match(/^(p|l)([0-9]+)$/);
+          if (matches) {
+            switch (matches[1]) {
+              case 'p':
+                var newPage = parseInt(matches[2]);
+                if (newPage < ctx.page) {
+                  shouldAddToCollection = false;
+                }
+                ctx.page = newPage;
+                break;
+              case 'l':
+                ctx.limit = parseInt(matches[2]);
+                break;
+            }
+          }
+        });
+      }
+
+      var fetchOpts = {
+        limit:ctx.limit || 20,
+        add:shouldAddToCollection,
+        success:function () {
+          ctx.listView.updateTableInfo({
+            page:ctx.page,
+            limit:fetchOpts.limit
+          });
+        }
+      };
+      if (this.page) {
+        fetchOpts.skip = (this.page - 1) * fetchOpts.limit;
+      }
+
+      this.collection.fetch(fetchOpts);
 
       var parent = this.getParentElement();
       this.switchToStateClass(parent, 'list-state');
