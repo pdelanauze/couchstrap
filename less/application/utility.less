@@ -1,0 +1,29 @@
+.app-container{
+  .state{
+    display: none;
+  }
+  &.new-state .state.new-state{
+    display: block;
+  }
+  &.edit-state .state.edit-state{
+    display: block;
+  }
+  &.list-state .state.list-state{
+    display: block;
+  }
+}
+
+table.table.vertical-middle tbody tr td{
+  vertical-align: middle;
+}
+table tbody td.table-cell-actions{
+  text-align: right;
+  .btn{
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  form{
+    display: inline-block;
+    margin: 0;
+  }
+}
