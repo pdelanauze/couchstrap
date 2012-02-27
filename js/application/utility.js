@@ -49,7 +49,7 @@ define(['jquery', 'underscore'], function ($, _) {
           '<div class="controls <%= field.inputOuterClass %>">' +
 
           '<% if(field.type == "textarea") { %>' +
-          '<textarea class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" rows="<%= field.rows %>" name="<%= field.name %>"><%= field.value %></textarea>' +
+          '<textarea class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" rows="<%= field.rows %>" name="<%= field.name %>" <% if(field.disabled){ %>disabled="disabled" <% } %>><%= field.value %></textarea>' +
           '<% } else if (field.type == "select" || field.type == "select-multiple"){ %>' +
           '<select class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" name="<%= field.name %>" <%= (field.type == \'select-multiple\') ? \'multiple="multiple"\' : \'\'%>> ' +
           '<% _.each(field.options, function(option){ %>' +
@@ -65,11 +65,9 @@ define(['jquery', 'underscore'], function ($, _) {
           '<% }); %>' +
           '</select>' +
           '<% } else if (field.type == "checkbox"){ %>' +
-          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" checked="<%= (field.value ? \'checked\' : \'\') %>" name="<%= field.name %>" type="<%= field.type %>"/> ' +
-          '<% } else if (field.type == "number" || field.type == "range"){ %>' +
-          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>" max="<%= field.max %>" min="<%= field.min %>" step="<%= field.step %>"/> ' +
+          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" checked="<%= (field.value ? \'checked\' : \'\') %>" name="<%= field.name %>" type="<%= field.type %>" <% if(field.disabled){ %>disabled="disabled" <% } %> /> ' +
           '<% } else { %>' +
-          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>"/> ' +
+          '<input class="<%= field.inputClass %>" id="<%= field.idPrefix %>-<%= recordId %>-<%= field.name %>" value="<%= field.value %>" name="<%= field.name %>" size="<%= field.size %>" type="<%= field.type %>" <% if(field.disabled){ %>disabled="disabled" <% } %> <% if (field.max) { %> max="<%= field.max %>" <% } %> <% if (field.min) { %> min="<%= field.min %>" <% } %> <% if (field.step) { %> step="<%= field.step %>" <% } %> /> ' +
           '<% } %>' +
 
           '<span class="help-inline"></span>' +
@@ -143,9 +141,9 @@ define(['jquery', 'underscore'], function ($, _) {
    *
    * Here is an example of a valid form structure:
    * var formStructure = {
-          action: '#/prescriptions/new',
+          action: '#/products/new',
           method: 'POST',
-          recordId: this.model.get('id'),
+          recordId: this.model.get('_id'),
           class: 'form-horizontal',
           fields: [
             {
@@ -154,7 +152,7 @@ define(['jquery', 'underscore'], function ($, _) {
               humanName: 'Id',
               outerClass: '',
               inputOuterClass: '',
-              value: this.model.get('id'),
+              value: this.model.get('_id'),
               type: 'hidden'
             },
             {
@@ -195,26 +193,29 @@ define(['jquery', 'underscore'], function ($, _) {
     }
 
     // Prep the defaults for the form structure
+    var now = new Date().getTime();
     _.defaults(formStructure, {
       action:'',
       formClass:'form-horizontal',
       method:'POST',
-      recordId:new Date().getTime(),
+      recordId:now,
       legend:false,
       fields:[],
-      buttons:[]
+      buttons:[],
+      idPrefix: now
     });
 
     _.each(formStructure.fields, function (field) {
       _.defaults(field, {
-        idPrefix:'field-' + new Date().getTime(),
+        idPrefix: 'field-' + formStructure.idPrefix,
         outerClass:'',
         name:'',
         humanName:'',
         inputOuterClass:'',
         value:'',
         inputClass:'',
-        type:'text'
+        type:'text',
+        size: ''
       });
 
       if (field.type == 'text' && !field.size) {
@@ -301,7 +302,7 @@ define(['jquery', 'underscore'], function ($, _) {
         formStructure.fields.push({
           idPrefix:options.humanName,
           name:key,
-          humanName:(key.charAt(0).toUpperCase() + key.substring(1).replace('_', ' ')),
+          humanName:(key.charAt(0).toUpperCase() + key.substring(1).replace(/_/g, ' ')),
           outerClass:'',
           inputOuterClass:'',
           inputClass:'input-xlarge',
