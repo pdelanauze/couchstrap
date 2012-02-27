@@ -12,15 +12,17 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
     pluralModelName:'',
     template:null,
     columns:[],
-    events:{
-      'submit form[method="DELETE"]':'doDelete'
-    },
+    events:{},
     initialize:function (options) {
 
       _.extend(this, options);
-      this.className += ' ' + this.modelName + '-table-item-view';
-
       _.bindAll(this, 'render', 'doDelete');
+
+      _.defaults(this.events, {
+        'submit form[method="DELETE"]':'doDelete'
+      });
+      this.delegateEvents();
+
       this.model.bind('remove', this.remove);
 
       // Create the template
@@ -38,7 +40,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
         this.template = _.template(template);
       }
 
-      $(this.el).html(this.template(this.model.toJSON()));
+      $(this.el).addClass(this.modelName + '-table-item-view').html(this.template(this.model.toJSON()));
       this.render();
 
       ModelBinding.bind(this);
@@ -70,13 +72,11 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
     pluralModelName:'',
     columns:[],
     itemView:BackboneUtility.Views.TableItemView,
-    events:{
-
-    },
+    events:{},
     initialize:function (options) {
 
       _.extend(this, options);
-      this.className += ' ' + this.modelName + '-table-view';
+      $(this.el).addClass(this.modelName + '-table-view');
 
       _.bindAll(this, 'render', 'itemAdded');
       this.collection.bind('add', this.itemAdded);
@@ -105,7 +105,6 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
       var itemView = new this.itemView({
         modelName:this.modelName,
         pluralModelName:this.pluralModelName,
-        className:this.className,
         columns:this.columns,
         model:model
       }).render();
@@ -130,7 +129,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
     initialize:function (options) {
 
       _.extend(this, options);
-      this.className += ' ' + this.modelName + '-table-control-view';
+      $(this.el).addClass(this.modelName + '-table-control-view');
 
       if (!this.template) {
         this.template = _.template('<div class="pull-right control top">' +
@@ -198,56 +197,72 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
     modelName:'',
     pluralModelName:'',
     formStructure:{},
-    events:{
-      'submit form':'doSave',
-      'reset form':'doReset',
-      'click .btn.cancel':'doCancel'
-    },
+    events:{},
     initialize:function (options) {
 
       _.extend(this, options);
-      this.className += ' ' + this.modelName + '-model-edit-view';
+      $(this.el).addClass(this.modelName + '-model-edit-view');
+
+      _.defaults(this.events, {
+        'submit form':'doSave',
+        'reset form':'doReset',
+        'click .btn.cancel':'doCancel',
+        'click .btn.delete':'doDelete'
+      });
+      this.delegateEvents();
 
       var ctx = this;
-      _.bindAll(this, 'render', 'doSave', 'doReset', 'doCancel', 'close', 'updateValidations', 'hasChanged');
+      _.bindAll(this, 'render', 'doSave', 'doReset', 'doCancel', 'close', 'updateValidations',
+              'hasChanged', 'doDelete');
       this.model.bind('remove', this.close);
       this.model.bind('error', this.updateValidations);
-      this.model.bind('change', this.hasChanged);
 
       var data = this.model.toJSON();
       if (this.model.isNew()) {
         data.id = 'new';
       }
 
-      _.defaults(this.formStructure, {
-        action:'#/' + this.pluralModelName + '/new',
-        method:'POST',
-        recordId:this.model.get('id'),
-        legend:'Edit ' + this.modelName,
-        fields:[],
-        buttons:[]
-      });
+      this.renderForm();
+    },
+    renderForm:function () {
+      var ctx = this;
 
-      if (this.formStructure.fields.length == 0) {
-        Utility.Templates.buildFormStructureFromModel(this.model.toJSON(), this.formStructure);
-      } else {
-        _.each(this.formStructure.fields, function (field) {
-          _.defaults(field, {
-            idPrefix:ctx.modelName
-          });
+      if (!this.template) {
+        _.defaults(this.formStructure, {
+          action:'#/' + this.pluralModelName + '/new',
+          method:'POST',
+          recordId:this.model.get('_id'),
+          fields:[],
+          buttons:[]
         });
+
+        if (this.formStructure.fields.length == 0) {
+          Utility.Templates.buildFormStructureFromModel(this.model.toJSON(), this.formStructure, {
+            humanName:this.modelName
+          });
+        } else {
+          _.each(this.formStructure.fields, function (field) {
+            _.defaults(field, {
+              idPrefix:ctx.modelName
+            });
+          });
+        }
+
+        $(this.el).empty().html(Utility.Templates.renderForm(this.formStructure));
+      } else {
+        $(this.el).empty().html(this.template({model:this.model.toJSON()}));
       }
 
-      $(this.el).html(Utility.Templates.renderForm(this.formStructure));
-
       ModelBinding.bind(this);
-
     },
     render:function () {
+      if (this.model.hasChanged()) {
+        this.hasChanged();
+      }
       return this;
     },
     hasChanged:function () {
-      return this.updateValidations(this.model, this.model.validate ? this.model.validate() : {});
+      this.updateValidations(this.model, this.model.validate ? this.model.validate() : {});
     },
     updateValidations:function (model, errors) {
       var ctx = this;
@@ -260,6 +275,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
                 find('.help-inline').text(v);
 
       });
+      return this;
     },
     doSave:function () {
       var ctx = this;
@@ -288,6 +304,14 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
         this.close();
         window.location.href = '#/' + this.pluralModelName;
       }
+    },
+    doDelete:function () {
+      if (!this.model.isNew() && confirm('Really delete ?')) {
+        this.model.destroy();
+        this.close();
+        window.location.href = '#/' + this.pluralModelName;
+      }
+      return false;
     },
     close:function () {
       this.remove();
@@ -351,7 +375,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
     listItems:function (query) {
 
       var ctx = this;
-      var shouldAddToCollection = true;
+      var shouldAddToCollection = false;
       if (query) {
         var queries = query.split('/');
         _.each(queries, function (q) {
@@ -360,8 +384,8 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
             switch (matches[1]) {
               case 'p':
                 var newPage = parseInt(matches[2]);
-                if (newPage < ctx.page) {
-                  shouldAddToCollection = false;
+                if (newPage > ctx.page) {
+                  shouldAddToCollection = true;
                 }
                 ctx.page = newPage;
                 break;
@@ -427,6 +451,16 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
       var parent = this.getParentElement();
       var model = this.collection.get(id);
 
+      var renderEditItem = function () {
+        ctx.editItemView = new ctx.modelEditView({
+          model:model,
+          modelName:ctx.modelName,
+          pluralModelName:ctx.pluralModelName
+        }).render();
+
+        $(ctx.editItemContainer, parent).append(ctx.editItemView.el);
+      };
+
       if (this.editItemView) {
         this.editItemView.close();
         this.editItemView = null;
@@ -436,20 +470,18 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
       if (!model) {
         model = new this.modelClass({'_id':id});
         model.fetch({
+          success:function () {
+            renderEditItem();
+          },
           error:function () {
             ctx.navigate("#/" + ctx.pluralModelName);
           }
         });
+      } else {
+        renderEditItem();
       }
 
       this.switchToStateClass(parent, 'edit-state');
-      this.editItemView = new this.modelEditView({
-        model:model,
-        modelName:this.modelName,
-        pluralModelName:this.pluralModelName
-      }).render();
-
-      $(this.editItemContainer, parent).append(this.editItemView.el);
     }
   });
 
