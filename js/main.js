@@ -20,8 +20,9 @@ require([
   'underscore',
   'backbone',
   'application/backbone-couchdb',
-  'modelbinding'
-], function ($, less, boostrap, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, ModelBinding) {
+  'modelbinding',
+  'application/couchdb-replication-app'
+], function ($, less, boostrap, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, ModelBinding, CouchDBReplicationApp) {
 
   console.log(arguments);
 
@@ -31,10 +32,23 @@ require([
   Backbone.couch_connector.config.view_name = 'by_type';
   Backbone.couch_connector.config.global_changes = true;
 
+  ModelBinding.Configuration.configureAllBindingAttributes("name");
+
   _.templateSettings = {
     evaluate    : /<%([\s\S]+?)%>/g,
     interpolate : /<%-([\s\S]+?)%>/g,
     escape      : /<%=([\s\S]+?)%>/g
   };
+
+  $(function(){
+
+    var replicationRouter = new CouchDBReplicationApp.Routers.ReplicationRouter({
+      parentContainerSelector: '#replication-app-container'
+    });
+
+    Backbone.history.start();
+
+  });
+
 
 });
