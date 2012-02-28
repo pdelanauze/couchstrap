@@ -492,10 +492,10 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
               'edit-state',
               'new-state');
 
-      this.route(this.pluralModelName, 'listItems', this.listItems);
-      this.route(this.pluralModelName + '/*splat', 'listItemsSplat', this.listItems);
-      this.route(this.pluralModelName + '/new', 'newItem', this.newItem);
-      this.route(this.pluralModelName + '/:id/edit', 'editItem', this.editItem);
+      this.route(this.pluralModelName, this.pluralModelName + 'List', this.listItems);
+      this.route(this.pluralModelName + '/*splat', this.pluralModelName + 'ListSplat', this.listItems);
+      this.route(this.pluralModelName + '/new', this.modelName + 'New', this.newItem);
+      this.route(this.pluralModelName + '/:id/edit', this.modelName + 'Edit', this.editItem);
 
     },
     switchToStateClass:function (el, newClass) {

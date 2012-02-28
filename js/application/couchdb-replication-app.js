@@ -363,9 +363,7 @@ define(['backbone', 'underscore', 'modelbinding', 'application/utility', 'applic
     modelEditView:CouchDBReplicationApp.Views.ReplicationEditItemView,
     initialize:function (options) {
 
-      this.collection = new (CouchDBReplicationApp.Collections.ReplicationCollection.extend({
-        model:this.modelClass
-      }))(); // Quick hack to make sure that we see all models during development...
+      this.collection = new CouchDBReplicationApp.Collections.ReplicationCollection();
 
       BackboneUtility.Routers.RESTishRouter.prototype.initialize.call(this, options);
 
