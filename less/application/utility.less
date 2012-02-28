@@ -31,3 +31,30 @@ table tbody td.table-cell-actions{
 table .btn.show-more:only-child,table .btn.show-less:only-child{
   display: block;
 }
+
+.model-edit-view.handle-file-attachments{
+  .file-attachment-handler-overlay{
+    display: none;
+  }
+  &.drag-over{
+    position: relative;
+    .file-attachment-handler-overlay{
+      display: block;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+    }
+    h2{
+      margin-top: 40px;
+      text-align: center;
+      color: white;
+      opacity: 1;
+    }
+  }
+}
+
+form.form-horizontal .controls .model-attachments-view{
+  margin-top: 6px;
+}

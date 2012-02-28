@@ -84,7 +84,11 @@
 
     <ul class="breadcrumb">
       <li><a href="#/replications">Replications</a> <span class="divider">/</span></li>
-      <li class="active"><a href="#/replications/<%= model._id ? (model._id + '/edit') : 'new' %>"><%= model._id ? ('Replication ' + model._id) : 'New replication' %></a></li>
+      <li class="active">
+        <a href="#/replications/<%= model._id ? (model._id + '/edit') : 'new' %>">
+          <%= model._id ? ('Replication ' + model._id) : 'New replication' %>
+        </a>
+      </li>
     </ul>
 
     <form action="#/replications/<%= model._id ? model._id : 'new' %>" method="POST" class="form-horizontal">
@@ -145,8 +149,8 @@
         </div>
         <div class="form-actions">
           <button class="btn btn-primary" type="submit" data-loading-text="Starting replication..." data-complete-text="Replication complete!">Replicate</button>
-          <button class="btn reset" type="reset">Reset</button>
           <button class="btn btn-danger delete" type="button">Delete & Stop replication</button>
+          <a href="#/replications" class="btn cancel">Cancel</a>
         </div>
       </fieldset>
     </form>

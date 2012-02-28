@@ -252,6 +252,7 @@ define(['backbone', 'underscore', 'modelbinding', 'application/utility', 'applic
 
   CouchDBReplicationApp.Views.ReplicationEditItemView = BackboneUtility.Views.ModelEditView.extend({
     template:_.template($("#replication-form-template").html()),
+    handleFileAttachments:false,
     events:{
       'click .push-pull-replication .btn.push-replication':'togglePushReplication',
       'click .push-pull-replication .btn.pull-replication':'togglePullReplication'
@@ -264,11 +265,22 @@ define(['backbone', 'underscore', 'modelbinding', 'application/utility', 'applic
     },
     renderForm:function () {
       BackboneUtility.Views.ModelEditView.prototype.renderForm.call(this);
+
       // Add the push / pull popover explanations
       this.$('.push-pull-replication .btn[rel="popover"]').popover();
+
+      var m = this.model;
+
+      if (m.get('target') === Backbone.couch_connector.config.db_name) {
+        $(this.el).removeClass('push-replication').addClass('pull-replication');
+        this.$('.control-group.push-pull-replication .btn-group .btn').removeClass('active').filter('.pull-replication').addClass('active');
+      } else {
+        $(this.el).removeClass('pull-replication').addClass('push-replication');
+        this.$('.control-group.push-pull-replication .btn-group .btn').removeClass('active').filter('.push-replication').addClass('active');
+      }
     },
-    doSave: function(){
-      if ($(this.el).hasClass('push-replication')){
+    doSave:function () {
+      if ($(this.el).hasClass('push-replication')) {
         this.model.set({source:Backbone.couch_connector.config.db_name});
       } else {
         this.model.set({target:Backbone.couch_connector.config.db_name, create_target:false});
@@ -278,9 +290,9 @@ define(['backbone', 'underscore', 'modelbinding', 'application/utility', 'applic
       var statusContainer = this.$('.replication-status-container').empty();
       submitButton.button('loading');
 
-      this.model.save(null, {success: function(){
+      this.model.save(null, {success:function () {
         submitButton.button('complete');
-        _.delay(function(){
+        _.delay(function () {
           submitButton.button('reset');
         }, 1500);
       }});
@@ -293,12 +305,10 @@ define(['backbone', 'underscore', 'modelbinding', 'application/utility', 'applic
       var statusContainer = this.$('.replication-status-container');
       var m = this.model;
 
-      if (m.get('source') === Backbone.couch_connector.config.db_name) {
-        $(this.el).removeClass('pull-replication').addClass('push-replication');
-        this.$('.control-group.push-pull-replication .btn-group .btn').removeClass('active').filter('.push-replication').addClass('active');
+      if (m.isNew()){
+        $(this.el).addClass('new-state');
       } else {
-        $(this.el).removeClass('push-replication').addClass('pull-replication');
-        this.$('.control-group.push-pull-replication .btn-group .btn').removeClass('active').filter('.pull-replication').addClass('active');
+        $(this.el).removeClass('new-state');
       }
 
       // Also render some status messages
@@ -348,10 +358,7 @@ define(['backbone', 'underscore', 'modelbinding', 'application/utility', 'applic
   CouchDBReplicationApp.Routers.ReplicationRouter = BackboneUtility.Routers.RESTishRouter.extend({
     modelName:'replication',
     pluralModelName:'replications',
-    modelClass:CouchDBReplicationApp.Models.Replication.extend({
-      validate:function () {
-      }
-    }),
+    modelClass:CouchDBReplicationApp.Models.Replication,
     tableControlView:CouchDBReplicationApp.Views.ReplicationTableControlView,
     modelEditView:CouchDBReplicationApp.Views.ReplicationEditItemView,
     initialize:function (options) {
