@@ -4,7 +4,9 @@ define(['jquery', 'underscore'], function ($, _) {
   var Utility = {
     DOM:{},
     String:{},
-    Templates:{}
+    Templates:{},
+    File: {},
+    Image: {}
   };
 
   Utility.DOM.serializeObject = function (el) {
@@ -322,6 +324,10 @@ define(['jquery', 'underscore'], function ($, _) {
 
     return formStructure;
 
+  };
+
+  Utility.File.getBase64FromDataURL = function (dataUrl) {
+    return dataUrl.match(/base64,(.*)$/)[1];
   };
 
   return Utility;
