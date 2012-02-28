@@ -499,6 +499,18 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
 
     },
     switchToStateClass:function (el, newClass) {
+      // Set this application as the active one
+      var body = $(document.body);
+      var appContainerMatch = new RegExp(/-app$/);
+      var currentAppClass = this.modelName + '-app';
+      var bodyClasses = body.attr('class') || '';
+      _.each(bodyClasses.split(' '), function(klass){
+        if (appContainerMatch.test(klass) && klass !== currentAppClass){
+          body.removeClass(klass);
+        }
+      });
+      body.addClass(currentAppClass);
+
       $(el).removeClass(this.possibleStateClasses.join(' ')).addClass(newClass);
       return this;
     },
