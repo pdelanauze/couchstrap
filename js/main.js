@@ -1,12 +1,12 @@
 require.config({
   paths:{
-    'jquery':'application/jquery.min',
-    'underscore':'application/underscore',
-    'backbone':'application/backbone',
-    'backbone.marionette': 'application/backbone.marionette',
-    'modelbinding': 'application/backbone.modelbinding',
-    'less': 'application/less-1.3.0',
-    'bootstrap': 'application/bootstrap'
+    'jquery':'lib/jquery.min',
+    'underscore':'lib/underscore',
+    'backbone':'lib/backbone',
+    'backbone.marionette': 'lib/backbone.marionette',
+    'modelbinding': 'lib/backbone.modelbinding',
+    'less': 'lib/less-1.3.0',
+    'bootstrap': 'lib/bootstrap'
   }
 });
 
@@ -14,17 +14,17 @@ require([
   'jquery',
   'less',
   'bootstrap',
-  'application/jquery.couch',
-  'application/sha1',
-  'application/plugins',
+  'lib/jquery.couch',
+  'lib/sha1',
+  'lib/plugins',
   'underscore',
   'backbone',
-  'application/backbone-couchdb',
+  'lib/backbone-couchdb',
   'modelbinding',
-  'application/couchdb-replication-app'
-], function ($, less, boostrap, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, ModelBinding, CouchDBReplicationApp) {
+  'application/application'
+], function ($, less, boostrap, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, ModelBinding, application) {
 
-  console.log(arguments);
+	// Global configuration
 
   // TODO You need to configure these to point to the right database / couch application
   Backbone.couch_connector.config.db_name = 'couchstrap';
@@ -40,14 +40,12 @@ require([
     escape      : /<%=([\s\S]+?)%>/g
   };
 
+	// Start the main application
+	application.start();
+
+	// Start the backbone history
   $(function(){
-
-    var replicationRouter = new CouchDBReplicationApp.Routers.ReplicationRouter({
-      parentContainerSelector: '#replication-app-container'
-    });
-
     Backbone.history.start();
-
   });
 
 

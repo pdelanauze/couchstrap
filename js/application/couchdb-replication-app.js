@@ -1,4 +1,4 @@
-define(['backbone', 'underscore', 'modelbinding', 'application/utility', 'application/backbone-utility'], function (Backbone, _, ModelBinding, Utility, BackboneUtility) {
+define(['backbone', 'underscore', 'modelbinding', 'lib/utility', 'lib/backbone-utility'], function (Backbone, _, ModelBinding, Utility, BackboneUtility) {
 
   var CouchDBReplicationApp = {
     Models:{},

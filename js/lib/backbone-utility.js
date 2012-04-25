@@ -1,4 +1,4 @@
-define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility'], function ($, _, Backbone, ModelBinding, Utility) {
+define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], function ($, _, Backbone, ModelBinding, Utility) {
 
   var BackboneUtility = {
     Views:{},
