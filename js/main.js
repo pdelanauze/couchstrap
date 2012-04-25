@@ -5,7 +5,7 @@ require.config({
     'backbone':'application/backbone',
     'backbone.marionette': 'application/backbone.marionette',
     'modelbinding': 'application/backbone.modelbinding',
-    'less': 'application/less-1.2.2',
+    'less': 'application/less-1.3.0',
     'bootstrap': 'application/bootstrap'
   }
 });
