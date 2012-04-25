@@ -139,7 +139,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'application/utility
 
       if (!this.template) {
         this.template = _.template('<div class="pull-right control top">' +
-                '<a href="#/' + this.pluralModelName + '/new" class="btn btn-primary">New ' + this.modelName + '</a>' +
+                '<a href="#/' + this.pluralModelName + '/new" class="btn btn-primary"><i class="icon-plus"></i> New ' + this.modelName + '</a>' +
                 '</div>' +
                 '<div class="table-container"></div>');
       }
