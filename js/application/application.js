@@ -1,5 +1,7 @@
-define(['application/couchdb-replication-app'], function (CouchDBReplicationApp) {
-
+define([
+	'jquery',
+	'application/couchdb-replication-app'
+], function ($, CouchDBReplicationApp) {
 
 	var Application = {};
 	Application.start = function () {
