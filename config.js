@@ -13,6 +13,7 @@
   "templates": "_attachments/templates",
   "db": "",
   "Jimfile": false,
-  "hooks": false
+  "hooks": false,
+	".rvmrc": false
 }
 }
