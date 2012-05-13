@@ -1,19 +1,27 @@
 define([
-	'jquery',
-	'application/couchdb-replication-app'
-], function ($, CouchDBReplicationApp) {
+  'jquery',
+  'application/couchdb-replication-app',
+  'application/todo-app'
+], function ($, CouchDBReplicationApp, TodoApp) {
 
-	var Application = {};
-	Application.start = function () {
+  var Application = {};
+  Application.start = function () {
 
-		$(function () {
-			var replicationRouter = new CouchDBReplicationApp.Routers.ReplicationRouter({
-				parentContainerSelector:'#replication-app-container'
-			});
-		});
+    $(function () {
+      $('#apps-container').append('<div class="row app-container" id="replication-app-container"></div>');
+      var replicationRouter = new CouchDBReplicationApp.Routers.ReplicationRouter({
+        parentContainerSelector:'#replication-app-container'
+      });
 
-	}
+      $('#apps-container').append('<div class="row app-container" id="todo-app-container"></div>');
+      var todoRouter = new TodoApp.Routers.TodoRouter({
+        parentContainerSelector:'#todo-app-container'
+      });
 
-	return Application;
+    });
+
+  }
+
+  return Application;
 
 });
