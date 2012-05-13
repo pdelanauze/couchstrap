@@ -11,7 +11,7 @@
 define(function () {
 
 
-  var sjs = SimpleJsonSchema = {
+  var sjs = {
 
     messages:{
       invalidNumber:' is not a number',
@@ -223,7 +223,7 @@ define(function () {
         prop = schema.additionalProperties[key];
       }
 
-      if (!prop){
+      if (!prop) {
         return;
       }
 
@@ -261,5 +261,5 @@ define(function () {
     }
   };
 
-  return SimpleJsonSchema;
+  return sjs;
 });
