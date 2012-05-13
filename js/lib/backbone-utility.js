@@ -273,9 +273,16 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
         });
 
         if (this.formStructure.fields.length == 0) {
-          Utility.Templates.buildFormStructureFromModel(this.model.toJSON(), this.formStructure, {
-            humanName:this.modelName
-          });
+          if (this.model.schema) {
+            Utility.Templates.buildFormStructureFromSchema(this.model.toJSON(), this.model.schema, this.formStructure, {
+              humanName:this.modelName
+            });
+          } else {
+            Utility.Templates.buildFormStructureFromModel(this.model.toJSON(), this.formStructure, {
+              humanName:this.modelName
+            });
+          }
+
         } else {
           _.each(this.formStructure.fields, function (field) {
             _.defaults(field, {
@@ -357,12 +364,22 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
       ctx.$('.control-group.error,:input.error').removeClass('error').
               find('.help-inline').text('');
 
-      _.each(errors, function (v, k) {
-        ctx.$(':input[name="' + k + '"]').addClass('error').
-                closest('.control-group').addClass('error').
-                find('.help-inline').text(v);
+      if (_.isArray(errors)) {
+        _.each(errors, function (v) {
+          ctx.$(':input[name="' + v.property + '"]').addClass('error').
+              closest('.control-group').addClass('error').
+              find('.help-inline').text(v.error);
 
-      });
+        });
+      } else {
+        _.each(errors, function (v, k) {
+          ctx.$(':input[name="' + k + '"]').addClass('error').
+              closest('.control-group').addClass('error').
+              find('.help-inline').text(v);
+
+        });
+      }
+
       return this;
     },
     doSave:function () {
@@ -475,6 +492,8 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
     tableControlView:BackboneUtility.Views.TableControlView,
     modelEditView:BackboneUtility.Views.ModelEditView,
 
+    tableColumns: [],
+
     limit:20,
     page:1,
 
@@ -496,6 +515,22 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
       this.route(this.pluralModelName + '/*splat', this.pluralModelName + 'ListSplat', this.listItems);
       this.route(this.pluralModelName + '/new', this.modelName + 'New', this.newItem);
       this.route(this.pluralModelName + '/:id/edit', this.modelName + 'Edit', this.editItem);
+
+      var schema = this.modelClass.prototype.schema;
+
+      // Prep the columns for the table control view
+      if (this.tableColumns.length === 0 && schema){
+        // Generate the three first from the model's schema
+        for(var key in schema.properties){
+          // Ignore id, rev and type keys
+          if (key !== '_id' && key !== 'type' && key !== '_rev'){
+            this.tableColumns.push({name: Utility.String.capitalize(key), value: key});
+          }
+          if (this.tableColumns.length == 3){
+            break;
+          }
+        }
+      }
 
     },
     switchToStateClass:function (el, newClass) {
@@ -563,7 +598,10 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
 
       if (!this.listView) {
         this.listView = new this.tableControlView({
-          collection:this.collection
+          collection:this.collection,
+          modelName: this.modelName,
+          pluralModelName: this.pluralModelName,
+          columns: this.tableColumns
         }).render();
 
         $(this.listItemsContainer, parent).append(this.listView.el);
