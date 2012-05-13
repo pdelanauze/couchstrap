@@ -11,8 +11,10 @@ define(['underscore', 'backbone', 'lib/simple-json-schema'], function (_, Backbo
     schema: false,
     validate: function(attributes){
       var report = SimpleJsonSchema.validate(attributes, this.schema, true);
+
       if (!report.isValid){
-        return report.errors;
+        report.attributes = attributes;
+        return report;
       }
     }
   });

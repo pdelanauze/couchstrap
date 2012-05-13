@@ -1,4 +1,4 @@
-define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], function ($, _, Backbone, ModelBinding, Utility) {
+define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], function ($, _, Backbone, BackboneModelBinder, Utility) {
 
   var BackboneUtility = {
     Views:{},
@@ -17,6 +17,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
     template:null,
     columns:[],
     events:{},
+    bindings: false,
     initialize:function (options) {
 
       _.extend(this, options);
@@ -34,7 +35,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
         var json = this.model.toJSON();
         var template = '';
         _.each(this.columns, function (column) {
-          template += '<td class="' + column.value + '" data-bind="' + (column.type || 'text') + ' ' + column.value + '"></td>';
+          template += '<td class="' + column.value + '" name="' + column.value + '"></td>';
         });
         template += '<td class="table-cell-actions">' +
                 '<a class="btn btn-small btn-primary edit" href="#/' + this.pluralModelName + '/edit">Edit</a>' +
@@ -47,7 +48,17 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
       $(this.el).addClass(this.modelName + '-table-item-view').html(this.template(this.model.toJSON()));
       this.render();
 
-      ModelBinding.bind(this);
+      if (!this.bindings){
+        this.bindings = {};
+        _.each(this.columns, function(column){
+          this.bindings[column.value] = '[name="' + column.value + '"]';
+        }, this);
+      }
+      if (!this.modelBinder){
+        this.modelBinder = new BackboneModelBinder();
+      }
+
+      this.modelBinder.bind(this.model, this.el, this.bindings);
     },
     render:function () {
       this.$('a.edit').attr('href', '#/' + this.pluralModelName + '/' + this.model.get('_id') + '/edit');
@@ -64,7 +75,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
     close:function () {
       this.remove();
       this.unbind();
-      ModelBinding.unbind(this);
+      this.modelBinder.unbind(this);
     }
   });
 
@@ -242,10 +253,11 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
 
       _.bindAll(this, 'render', 'renderForm', 'renderAttachments',
               'doSave', 'doReset', 'doCancel', 'close', 'updateValidations',
-              'hasChanged', 'doDelete', 'doDeleteAttachment',
+              'doValidate', 'doDelete', 'doDeleteAttachment',
               'dragOver', 'dragLeave', 'dragDrop');
 
       this.model.bind('remove', this.close);
+      this.model.bind('change', this.doValidate);
       this.model.bind('error', this.updateValidations);
       this.model.bind('change:_attachments', this.renderAttachments);
 
@@ -300,7 +312,18 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
         this.renderAttachments();
       }
 
-      ModelBinding.bind(this);
+      if (!this.modelBinder){
+        this.modelBinder = new BackboneModelBinder();
+      }
+
+      if (!this.bindings){
+        this.bindings = {};
+        _.each(this.formStructure.fields, function(field){
+          this.bindings[field.name] = '[name="' + field.name + '"]';
+        }, this);
+      }
+
+      this.modelBinder.bind(this.model, this.el, this.bindings);
     },
     renderAttachments:function () {
       var m = this.model;
@@ -356,29 +379,41 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
     render:function () {
       return this;
     },
-    hasChanged:function () {
+    doValidate:function () {
       this.updateValidations(this.model, this.model.validate ? this.model.validate() : {});
     },
-    updateValidations:function (model, errors) {
+    updateValidations:function (model, report) {
       var ctx = this;
-      ctx.$('.control-group.error,:input.error').removeClass('error').
-              find('.help-inline').text('');
 
-      if (_.isArray(errors)) {
-        _.each(errors, function (v) {
-          ctx.$(':input[name="' + v.property + '"]').addClass('error').
-              closest('.control-group').addClass('error').
-              find('.help-inline').text(v.error);
-
-        });
-      } else {
-        _.each(errors, function (v, k) {
-          ctx.$(':input[name="' + k + '"]').addClass('error').
-              closest('.control-group').addClass('error').
-              find('.help-inline').text(v);
-
-        });
+      if (!report){
+        report = {isValid: true};
       }
+      if (report.isValid){
+        // Enable the submit button
+        this.$(':input[type="submit"]').removeAttr('disabled');
+      } else {
+        // Disable the submit button
+        this.$(':input[type="submit"]').attr('disabled', 'disabled');
+      }
+
+      if (report.attributes) {
+        // Only these attributes have been validated
+        _.each(report.attributes, function (v, k) {
+          ctx.$(':input[name="' + k + '"]').removeClass('error').
+              closest('.control-group').removeClass('error').
+              find('.help-inline').text('');
+        });
+
+      } else {
+        ctx.$('.control-group.error,:input.error').removeClass('error').
+            find('.help-inline').text('');
+      }
+
+      _.each(report.errors, function (v) {
+        ctx.$(':input[name="' + v.property + '"]').addClass('error').
+            closest('.control-group').addClass('error').
+            find('.help-inline').text(v.error);
+      });
 
       return this;
     },
@@ -427,7 +462,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinding', 'lib/utility'], func
     close:function () {
       this.remove();
       this.unbind();
-      ModelBinding.unbind(this);
+      this.modelBinder.unbind(this);
     },
     dragOver:function (e) {
       $(this.el).addClass('drag-over');

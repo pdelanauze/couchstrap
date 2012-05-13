@@ -4,7 +4,7 @@ require.config({
     'underscore':'lib/underscore',
     'backbone':'lib/backbone',
     'backbone.marionette': 'lib/backbone.marionette',
-    'modelbinding': 'lib/backbone.modelbinding',
+    'modelbinder': 'lib/Backbone.ModelBinder',
     'less': 'lib/less-1.3.0',
     'bootstrap': 'lib/bootstrap'
   }
@@ -20,9 +20,9 @@ require([
   'underscore',
   'backbone',
   'lib/backbone-couchdb',
-  'modelbinding',
+  'modelbinder',
   'application/application'
-], function ($, less, boostrap, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, ModelBinding, application) {
+], function ($, less, boostrap, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, BackboneModelBinder, application) {
 
 	// Global configuration
 
@@ -31,8 +31,6 @@ require([
   Backbone.couch_connector.config.ddoc_name = 'couchstrap';
   Backbone.couch_connector.config.view_name = 'by_type';
   Backbone.couch_connector.config.global_changes = true;
-
-  ModelBinding.Configuration.configureAllBindingAttributes("name");
 
   _.templateSettings = {
     evaluate    : /<%([\s\S]+?)%>/g,
