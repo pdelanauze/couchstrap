@@ -1,10 +1,11 @@
-define(['underscore', 'backbone'], function(_, Backbone){
-  /*
-  (c) 2011 Jan Monschke
-  v1.1
-  backbone-couchdb.js is licensed under the MIT license.
-  */
 
+/*
+(c) 2011 Jan Monschke
+v1.1
+backbone-couchdb.js is licensed under the MIT license.
+*/
+
+define(['underscore', 'backbone', 'jquery'], function(_, Backbone, $) {
   var con,
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; },
@@ -15,6 +16,7 @@ define(['underscore', 'backbone'], function(_, Backbone){
       db_name: "backbone_connect",
       ddoc_name: "backbone_example",
       view_name: "byCollection",
+      list_name: null,
       global_changes: false,
       base_url: null
     },
@@ -53,16 +55,20 @@ define(['underscore', 'backbone'], function(_, Backbone){
       }
     },
     read_collection: function(coll, opts) {
-      var keys, _opts, _view,
+      var keys, _ddoc, _list, _opts, _view,
         _this = this;
       _view = this.config.view_name;
+      _ddoc = this.config.ddoc_name;
+      _list = this.config.list_name;
       keys = [this.helpers.extract_collection_name(coll)];
       if (coll.db != null) {
         if (coll.db.changes || this.config.global_changes) {
           coll.listen_to_changes();
         }
         if (coll.db.view != null) _view = coll.db.view;
+        if (coll.db.ddoc != null) _ddoc = coll.db.ddoc;
         if (coll.db.keys != null) keys = coll.db.keys;
+        if (coll.db.list != null) _list = coll.db.list;
       }
       _opts = {
         keys: keys,
@@ -72,14 +78,24 @@ define(['underscore', 'backbone'], function(_, Backbone){
           _ref = data.rows;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             doc = _ref[_i];
-            (doc.value) ? _temp.push(doc.value) : _temp.push(doc.doc);
+            if (doc.value) {
+              _temp.push(doc.value);
+            } else {
+              _temp.push(doc.doc);
+            }
           }
           opts.success(_temp);
           return opts.complete();
         },
-        error: function() {
-          opts.error();
-          return opts.complete();
+        error: function(status, error, reason) {
+          var res;
+          res = {
+            status: status,
+            error: error,
+            reason: reason
+          };
+          opts.error(res);
+          return opts.complete(res);
         }
       };
       if (opts.limit != null) _opts.limit = opts.limit;
@@ -92,7 +108,11 @@ define(['underscore', 'backbone'], function(_, Backbone){
       if ((coll.db != null) && (coll.db.view != null) && !(coll.db.keys != null)) {
         delete _opts.keys;
       }
-      return this.helpers.make_db().view("" + this.config.ddoc_name + "/" + _view, _opts);
+      if (_list) {
+        return this.helpers.make_db().list("" + _ddoc + "/" + _list, "" + _view, _opts);
+      } else {
+        return this.helpers.make_db().view("" + _ddoc + "/" + _view, _opts);
+      }
     },
     read_model: function(model, opts) {
       if (!model.id) {
@@ -103,9 +123,15 @@ define(['underscore', 'backbone'], function(_, Backbone){
           opts.success(doc);
           return opts.complete();
         },
-        error: function() {
-          opts.error();
-          return opts.complete();
+        error: function(status, error, reason) {
+          var res;
+          res = {
+            status: status,
+            error: error,
+            reason: reason
+          };
+          opts.error(res);
+          return opts.complete(res);
         }
       });
     },
@@ -122,9 +148,15 @@ define(['underscore', 'backbone'], function(_, Backbone){
           });
           return opts.complete();
         },
-        error: function() {
-          opts.error();
-          return opts.complete();
+        error: function(status, error, reason) {
+          var res;
+          res = {
+            status: status,
+            error: error,
+            reason: reason
+          };
+          opts.error(res);
+          return opts.complete(res);
         }
       });
     },
@@ -137,12 +169,18 @@ define(['underscore', 'backbone'], function(_, Backbone){
           return opts.success();
         },
         error: function(nr, req, e) {
+          var res;
           if (e === "deleted") {
             opts.success();
             return opts.complete();
           } else {
-            opts.error();
-            return opts.complete();
+            res = {
+              status: status,
+              error: error,
+              reason: reason
+            };
+            opts.error(res);
+            return opts.complete(res);
           }
         }
       });
@@ -271,4 +309,4 @@ define(['underscore', 'backbone'], function(_, Backbone){
 
   })(Backbone.Collection);
 
-});
+}); //.call(this);
