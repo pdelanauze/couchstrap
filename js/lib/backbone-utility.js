@@ -21,14 +21,14 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     initialize:function (options) {
 
       _.extend(this, options);
-      _.bindAll(this, 'render', 'doDelete');
+      _.bindAll(this, 'render', 'doDelete', 'close');
 
       _.defaults(this.events, {
         'submit form[method="DELETE"]':'doDelete'
       });
       this.delegateEvents();
 
-      this.model.bind('remove', this.remove);
+      this.model.bind('remove', this.close);
 
       // Create the template
       if (!this.template) {
@@ -68,7 +68,6 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     doDelete:function () {
       if (confirm('Are you sure ?')) {
         this.model.destroy();
-        this.close();
       }
       return false;
     },
