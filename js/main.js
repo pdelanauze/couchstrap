@@ -19,7 +19,7 @@ require([
   'lib/plugins',
   'underscore',
   'backbone',
-  'lib/backbone-couchdb',
+  'lib/backbone.couchdb',
   'modelbinder',
   'application/application'
 ], function ($, less, boostrap, jQueryCouch, sha1, plugins, _, Backbone, backboneCouchDb, BackboneModelBinder, application) {
@@ -27,10 +27,8 @@ require([
 	// Global configuration
 
   // TODO You need to configure these to point to the right database / couch application
-  Backbone.couch_connector.config.db_name = 'couchstrap';
-  Backbone.couch_connector.config.ddoc_name = 'couchstrap';
-  Backbone.couch_connector.config.view_name = 'by_type';
-  Backbone.couch_connector.config.global_changes = true;
+  backboneCouchDb.couch.options.database = 'couchstrap';
+  backboneCouchDb.couch.options.design = 'couchstrap';
 
   _.templateSettings = {
     evaluate    : /<%([\s\S]+?)%>/g,
