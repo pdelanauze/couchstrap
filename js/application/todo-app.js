@@ -5,7 +5,8 @@
  * Time: 2:15 PM
  * To change this template use File | Settings | File Templates.
  */
-define(['underscore', 'backbone', '../lib/utility', '../lib/backbone-utility', '../lib/backbone-schema-model'], function (_, Backbone, Utility, BackboneUtility, BackboneSchemaModel) {
+define(['underscore', 'backbone', '../lib/utility', '../lib/backbone-utility', '../lib/backbone-couch-schema-model', '../lib/backbone.couchdb'],
+    function (_, Backbone, Utility, BackboneUtility, BackboneCouchSchemaModel, Backbone) {
 
   var TodoApp = {
     Models:{},
@@ -16,8 +17,9 @@ define(['underscore', 'backbone', '../lib/utility', '../lib/backbone-utility', '
     }
   };
 
-  TodoApp.Models.Todo = BackboneSchemaModel.extend({
-    url: '/todos',
+  TodoApp.Models.Todo = BackboneCouchSchemaModel.extend({
+    // TODO Introduce a app-config dependency that contains all the configuration options of the application, such as the url of the couchdb server
+    url: '/couchstrap/',
     schema:{
       description:'Todo item',
       type:'todo',
@@ -46,9 +48,20 @@ define(['underscore', 'backbone', '../lib/utility', '../lib/backbone-utility', '
     }
   });
 
-  TodoApp.Collections.TodoCollection = Backbone.Collection.extend({
+  TodoApp.Collections.TodoCollection = Backbone.couch.Collection.extend({
     model:TodoApp.Models.Todo,
-    url: '/todos'
+    change_feed: true,
+    couch: function() {
+      return {
+        view: Backbone.couch.options.design + '/by_type',
+        key: 'todos',
+        include_docs: true
+      }
+    },
+    initialize: function(){
+      this._db = Backbone.couch.db(Backbone.couch.options.database);
+    }
+    // _db:Backbone.couch.db(Backbone.couch.options.database) // Set a runtime...
   });
 
   TodoApp.Routers.TodoRouter = BackboneUtility.Routers.RESTishRouter.extend({
