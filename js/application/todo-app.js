@@ -19,7 +19,9 @@ define(['underscore', 'backbone', '../lib/utility', '../lib/backbone-utility', '
 
   TodoApp.Models.Todo = BackboneCouchSchemaModel.extend({
     // TODO Introduce a app-config dependency that contains all the configuration options of the application, such as the url of the couchdb server
-    url: '/couchstrap/',
+    defaults: {
+      collection: 'todos'
+    },
     schema:{
       description:'Todo item',
       type:'todo',
