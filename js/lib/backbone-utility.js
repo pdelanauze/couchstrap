@@ -251,13 +251,13 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       }
 
       _.bindAll(this, 'render', 'renderForm', 'renderAttachments',
-              'doSave', 'doReset', 'doCancel', 'close', 'updateValidations',
-              'doValidate', 'doDelete', 'doDeleteAttachment',
+              'doSave', 'doReset', 'doCancel', 'close', 'modelError',
+              'modelChanged', 'doDelete', 'doDeleteAttachment',
               'dragOver', 'dragLeave', 'dragDrop');
 
       this.model.bind('remove', this.close);
-      this.model.bind('change', this.doValidate);
-      this.model.bind('error', this.updateValidations);
+      this.model.bind('change', this.modelChanged);
+      this.model.bind('error', this.modelError);
       this.model.bind('change:_attachments', this.renderAttachments);
 
       this.dragLeave = _.debounce(this.dragLeave, 1200);
@@ -378,35 +378,32 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     render:function () {
       return this;
     },
-    doValidate:function () {
-      this.updateValidations(this.model, this.model.validate ? this.model.validate() : {});
-    },
-    updateValidations:function (model, report) {
-      var ctx = this;
+    modelChanged:function (model, event) {
 
-      if (!report){
-        report = {isValid: true};
-      }
-      if (report.isValid){
-        // Enable the submit button
-        this.$(':input[type="submit"]').removeAttr('disabled');
-      } else {
-        // Disable the submit button
-        this.$(':input[type="submit"]').attr('disabled', 'disabled');
-      }
-
-      if (report.attributes) {
-        // Only these attributes have been validated
-        _.each(report.attributes, function (v, k) {
-          ctx.$(':input[name="' + k + '"]').removeClass('error').
+      // Remove the validation errors from the view on the specific attributes
+      if (event && event.changes){
+        _.each(event.changes, function (v, k) {
+          this.$(':input[name="' + k + '"]').removeClass('error').
               closest('.control-group').removeClass('error').
               find('.help-inline').text('');
-        });
-
-      } else {
-        ctx.$('.control-group.error,:input.error').removeClass('error').
-            find('.help-inline').text('');
+        }, this);
       }
+
+      // Enable / disable the submit button based on whether the UI has an error class
+      // This is because a model's attributes wont be changed if they are not valid, hence we cannot reliably
+      // make a model.isValid() check, as it will validate against valid attributes only, and therefore always return
+      // true ;)
+      if (this.$(':input.error').length === 0) {
+        this.$(':input[type="submit"]').removeAttr('disabled');
+      }
+
+      return this;
+    },
+    modelError:function (model, report) {
+
+      var ctx = this;
+
+      ctx.$(':input[type="submit"]').attr('disabled', 'disabled');
 
       _.each(report.errors, function (v) {
         ctx.$(':input[name="' + v.property + '"]').addClass('error').
@@ -426,6 +423,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
           }
         });
       } catch (e) {
+        // TODO Fix me ... If something wrong happens, we should display a message to the user...
         console.log('error', e);
       }
 
