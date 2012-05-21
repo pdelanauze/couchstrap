@@ -1,5 +1,5 @@
 function(doc, req){
-  if (doc.collection){
+  if (doc.type){
     return true;
   }
   return false;
