@@ -67,13 +67,14 @@ define(['underscore', 'backbone', '../lib/utility', '../lib/backbone-utility', '
     // _db:Backbone.couch.db(Backbone.couch.options.database) // Set a runtime...
   });
 
-  TodoApp.Routers.TodoRouter = BackboneUtility.Routers.RESTishRouter.extend({
+  TodoApp.Routers.TodoRouter = BackboneUtility.Routers.ScaffoldViewBasedRouter.extend({
     modelName:'todo',
     pluralModelName:'todos',
     modelClass:TodoApp.Models.Todo,
+    parentContainer: $("#apps-container").append('<div class="todo-app-container"></div>'),
     initialize: function(opts){
       this.collection = new TodoApp.Collections.TodoCollection();
-      BackboneUtility.Routers.RESTishRouter.prototype.initialize.call(this, opts);
+      BackboneUtility.Routers.ScaffoldViewBasedRouter.prototype.initialize.apply(this, arguments);
 
       // Add the links to the application
       $('.navbar-fixed-top ul.nav').append('<li><a href="#/' + this.pluralModelName + '">' + Utility.String.capitalize(this.pluralModelName) + '</a></li>');

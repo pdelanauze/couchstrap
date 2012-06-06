@@ -48,6 +48,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       $(this.el).addClass(this.modelName + '-table-item-view').html(this.template(this.model.toJSON()));
       this.render();
 
+      // If we have no bindings already defined, generate them for the table's columns
       if (!this.bindings){
         this.bindings = {};
         _.each(this.columns, function(column){
@@ -79,7 +80,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
   });
 
   /**
-   * Represents the actual table element used to represent a collection's contents.
+   * Represents the actual table HTML element used to represent a collection's contents.
    */
   BackboneUtility.Views.TableView = Backbone.View.extend({
     className:'table table-striped vertical-middle ',
@@ -97,6 +98,25 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       _.bindAll(this, 'render', 'itemAdded');
       this.collection.bind('add', this.itemAdded);
       this.collection.bind('reset', this.render);
+
+      if (!this.columns || this.columns.length == 0) {
+        var schema = this.collection.model.prototype.schema;
+        // Prep the columns for the table control view
+        if (schema) {
+          // Generate the three first from the model's schema
+          for (var key in schema.properties) {
+            // Ignore id, rev and type keys
+            if (key !== '_id' && key !== 'type' && key !== '_rev') {
+              this.columns.push({name:Utility.String.capitalize(key), value:key});
+            }
+            if (this.columns.length == 3) {
+              break;
+            }
+          }
+        } else {
+          console.log('Unable to dynamically generate column names, implement or inform the user to create his own');
+        }
+      }
 
       // Pre-render
       $(this.el).html(Utility.Templates.renderTableStructure({
@@ -134,6 +154,12 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     }
   });
 
+  /**
+   * Responsible for controlling the table, for example pagination, sorting, etc.
+   * Also encapsulates the table view, therefore allowing for additional ux elements, such as pagination, sorting,
+   * a new item link, etc.
+   *
+   */
   BackboneUtility.Views.TableControlView = Backbone.View.extend({
     className:'table-control-view',
     modelName:'',
@@ -155,6 +181,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       }
 
       if (!this.tableViewInstance) {
+        // TODO Should be able to remove _.extend here, they are all the same attributes... Test it
         this.tableViewInstance = new this.tableView(_.extend(options, {
           columns:this.columns,
           modelName:this.modelName,
@@ -162,7 +189,8 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
         }));
       }
 
-      _.bindAll(this, 'render');
+      _.bindAll(this, 'render', 'updateTableInfo');
+      this.collection.on('pagechanged', this.updateTableInfo);
     },
     render:function () {
       this.tableViewInstance.render();
@@ -176,10 +204,25 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       var hasMore = false;
       var hasItemsNotShown = false;
 
-      if (options.limit && this.collection.length < options.limit) {
+      // We can either receive an object with an offset and totalRows, which, if we do have, is sufficient to
+      // determine whether we have more records that can be loaded in the future
+      // Otherwise, let's estimate their values
+      if (!options.offset){
+        var itemCount = this.collection.length;
+        var theoreticalOffsetStart = (options.page - 1) * options.limit;
+        var theoreticalOffsetStop = theoreticalOffsetStart + options.limit;
+
+        if (itemCount >= theoreticalOffsetStart && itemCount <= theoreticalOffsetStop){
+          // It's between the page that we should be, all records from start should be displayed..
+          if (itemCount === theoreticalOffsetStop){
+            hasMore = true;
+          }
+        } else if (options.page > 1){
+          // There are probably previous records
+          hasItemsNotShown = true;
+        }
+      } else if (options.offset < options.totalRows){
         hasMore = true;
-      } else if (options.limit && options.page > 1 && this.collection.length < (options.limit * options.page)) {
-        hasItemsNotShown = true;
       }
 
       var href = '#/' + this.pluralModelName + '/p' + (options.page ? options.page + 1 : 2);
@@ -190,9 +233,9 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       this.$('.btn.show-more').attr('href', href);
 
       if (hasMore) {
-        this.$('.btn.show-more').hide();
-      } else {
         this.$('.btn.show-more').show();
+      } else {
+        this.$('.btn.show-more').hide();
       }
 
       if (hasItemsNotShown) {
@@ -205,6 +248,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     close:function () {
       this.remove();
       this.unbind();
+      this.collection.off('pagechanged', this.updateTableInfo);
     }
   });
 
@@ -212,9 +256,13 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     className:'model-edit-view',
     modelName:'',
     pluralModelName:'',
-    formStructure:{},
+//    formStructure:{},
     events:{},
     initialize:function (options) {
+
+      _.defaults(options, {
+        formStructure: {}
+      });
 
       _.extend(this, options);
       $(this.el).addClass(this.modelName + '-model-edit-view');
@@ -517,7 +565,232 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     }
   });
 
+  BackboneUtility.Views.AppView = Backbone.View.extend({
+    className: 'app-view',
+    activeView: null,
+    appName: null,
+    initialize: function(opts){
+      this.collection = opts.collection;
+      _.extend(this, opts);
+      _.bindAll(this, 'showView');
 
+      if (!this.appName){
+        this.appName = new Date().getTime();
+      }
+    },
+    showView: function(newView){
+      if (this.activeView){
+        this.activeView.close();
+      }
+      this.activeView = newView;
+      this.$el.append(this.activeView.el);
+      this.updateCssStatus();
+    },
+    updateCssStatus:function () {
+      // Set this application as the active one
+      var body = $(document.body);
+      var appContainerMatch = new RegExp(/-app$/);
+      var currentAppClass = this.appName + '-app';
+      var bodyClasses = body.attr('class') || '';
+
+      // Remove app classes that don't correspond to the current one
+      _.each(bodyClasses.split(' '), function (klass) {
+        if (appContainerMatch.test(klass) && klass !== currentAppClass) {
+          body.removeClass(klass);
+        }
+      });
+      body.addClass(currentAppClass);
+      return this;
+    }
+  });
+
+  /**
+   * This AppView revolves around the assumption that the listview is always loaded and the editview needs to be
+   * reconstructed. (TODO)
+   *
+   * @type {*}
+   */
+  BackboneUtility.Views.CrudAppView = BackboneUtility.Views.AppView.extend({
+
+    editItemView: null,
+    listView: null,
+
+    initialize: function(opts){
+      BackboneUtility.Views.AppView.prototype.initialize.apply(this, arguments);
+      _.extend(this, opts);
+
+      // Add the editItemView and listView
+      this.$el.append(this.listView.el);
+      this.$el.append(this.editItemView.el);
+
+      this.editItemView.$el.hide();
+    }
+
+  });
+
+  /**
+   * The base scaffold router
+   *
+   * Requires:
+   * - collection: The collection of the models being managed
+   * - modelClass: The class of the model that's being managed
+   * - parentContainer: The HTML element
+   * @type {*}
+   */
+  BackboneUtility.Routers.ScaffoldRouter = Backbone.Router.extend({
+    collection: null,
+    modelClass: null,
+    parentContainer: null,
+    initialize: function(opts){
+      _.extend(this, opts);
+
+    }
+  });
+
+  BackboneUtility.Routers.ScaffoldViewBasedRouter = BackboneUtility.Routers.ScaffoldRouter.extend({
+
+    modelName:'',
+    pluralModelName:'',
+    tableControlViewClass:BackboneUtility.Views.TableControlView,
+    modelEditViewClass:BackboneUtility.Views.ModelEditView,
+
+    tableColumns:[],
+
+    limit:20,
+    page:1,
+
+    appView:null,
+
+    initialize:function (opts) {
+      BackboneUtility.Routers.ScaffoldRouter.prototype.initialize.apply(this, arguments);
+      _.extend(this, opts);
+
+      // Set the routes
+      this.route(this.pluralModelName, this.pluralModelName + 'List', this.listItems);
+      this.route(this.pluralModelName + '/*splat', this.pluralModelName + 'ListSplat', this.listItems);
+      this.route(this.pluralModelName + '/new', this.modelName + 'New', this.newItem);
+      this.route(this.pluralModelName + '/:id/edit', this.modelName + 'Edit', this.editItem);
+
+      if (!this.appView) {
+        this.appView = new BackboneUtility.Views.AppView({el:this.parentContainer});
+        this.appView.render();
+      }
+    },
+
+    listItems:function (query) {
+
+      var ctx = this;
+      var shouldAddToCollection = false;
+
+      // Parse the query parameters, such as page and limit options
+      if (query) {
+        var queries = query.split('/');
+        _.each(queries, function (q) {
+          var matches = q.match(/^(p|l)([0-9]+)$/);
+          if (matches) {
+            switch (matches[1]) {
+              case 'p':
+                var newPage = parseInt(matches[2]);
+                if (newPage > ctx.page) {
+                  shouldAddToCollection = true;
+                }
+                ctx.page = newPage;
+                break;
+              case 'l':
+                ctx.limit = parseInt(matches[2]);
+                break;
+            }
+          }
+        });
+      }
+
+      var listView = new this.tableControlViewClass({
+        collection:this.collection,
+        modelName:this.modelName,
+        pluralModelName:this.pluralModelName,
+        columns:this.tableColumns
+      });
+
+      // Prepare the fetch options for the collection
+      var fetchOpts = {
+        limit:ctx.limit || 20,
+        add:shouldAddToCollection,
+        success:function (coll, results) {
+          ctx.collection.trigger('pagechanged', {
+            page:ctx.page,
+            limit:fetchOpts.limit
+            /*totalRows:response.total_rows,
+            offset:response.offset*/
+          });
+        }
+      };
+      if (this.page) {
+        fetchOpts.skip = (this.page - 1) * fetchOpts.limit;
+      }
+
+      this.collection.fetch(fetchOpts);
+      listView.render();
+      this.appView.showView(listView);
+    },
+    newItem:function () {
+      var model = null;
+      this.collection.each(function (item) {
+        if (item.isNew()) {
+          model = item;
+        }
+      });
+
+      // Create a model if we didn't find a new one already in the list
+      if (!model) {
+        model = new this.modelClass();
+      }
+
+      var newItemView = new this.modelEditViewClass({
+        model:model,
+        modelName:this.modelName,
+        pluralModelName:this.pluralModelName
+      });
+      newItemView.render();
+
+      this.appView.showView(newItemView);
+    },
+    editItem:function (id) {
+      var ctx = this;
+      var model = this.collection.get(id);
+
+      var renderEditItem = function () {
+        var editItemView = new ctx.modelEditViewClass({
+          model:model,
+          modelName:ctx.modelName,
+          pluralModelName:ctx.pluralModelName
+        });
+        editItemView.render();
+        ctx.appView.showView(editItemView);
+      };
+
+      // Fetch from the server if this model is not yet in the collection
+      if (!model) {
+        model = new this.modelClass({'_id':id});
+        model.fetch({
+          success:function () {
+            renderEditItem();
+          },
+          error:function () {
+            // TODO Flash an error message here, saying it doesnt exist, or render a 404 view
+            ctx.navigate("#/" + ctx.pluralModelName);
+          }
+        });
+      } else {
+        renderEditItem();
+      }
+    }
+
+  });
+
+  /**
+   *
+   *
+   */
   BackboneUtility.Routers.RESTishRouter = Backbone.Router.extend({
 
     possibleStateClasses:[],
@@ -667,14 +940,22 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
         model = new this.modelClass();
       }
 
-      this.switchToStateClass(parent, 'new-state');
-      this.newItemView = new this.modelEditView({
-        model:model,
-        modelName:this.modelName,
-        pluralModelName:this.pluralModelName
-      }).render();
+      if (this.editItemView){
+        this.editItemView.close();
+        this.editItemView = null;
+      }
 
-      $(this.newItemContainer, parent).append(this.newItemView.el);
+      if (!this.newItemView){
+        this.newItemView = new this.modelEditView({
+          model:model,
+          modelName:this.modelName,
+          pluralModelName:this.pluralModelName
+        }).render();
+
+        $(this.newItemContainer, parent).append(this.newItemView.el);
+      }
+
+      this.switchToStateClass(parent, 'new-state');
     },
     editItem:function (id) {
       var ctx = this;
