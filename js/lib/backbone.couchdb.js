@@ -83,7 +83,7 @@ define(['jquery', 'underscore', 'backbone', './jquery.couch'], function(jQuery, 
                             "and/or the list");
 
           couch._remove(opts);
-          method(_.extend({
+          method(_.extend({}, cb, {
             success: function(resp) {
               cb.success(_.map(resp.rows, couch._format_row));
             },

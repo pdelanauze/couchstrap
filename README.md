@@ -6,10 +6,18 @@ Technologies used include
 
 - soca
 - Twitter's bootstrap
-- Backbone.js
-- Backbone.js modelbinding
-- Jan Monschke's Backbone CouchDB adapter
+- Require.js
+- Backbone.js (and therefore underscore and jQuery)
+- Backbone.js modelbinder
+- The pyronicide couchdb adapter
 - jQuery
 - Less
 - Require.js
+
+Tools provided:
+- Backbone utility functions
+- SimpleJsonSchema validator
+- A couchdb compatible BackboneSchemaModel
+- A CouchDB replication app
+- A Todo example app!
 
