@@ -566,11 +566,13 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
   });
 
   BackboneUtility.Views.AppView = Backbone.View.extend({
-    className: 'app-view',
-    activeView: null,
-    appName: null,
     initialize: function(opts){
       this.collection = opts.collection;
+      _.defaults(this, {
+        className:'app-view',
+        activeView:null,
+        appName:null,
+      });
       _.extend(this, opts);
       _.bindAll(this, 'showView');
 
@@ -612,11 +614,12 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
    */
   BackboneUtility.Views.CrudAppView = BackboneUtility.Views.AppView.extend({
 
-    editItemView: null,
-    listView: null,
-
     initialize: function(opts){
       BackboneUtility.Views.AppView.prototype.initialize.apply(this, arguments);
+      _.defaults(this, {
+        editItemView: null,
+        listView: null,
+      });
       _.extend(this, opts);
 
       // Add the editItemView and listView
@@ -638,31 +641,34 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
    * @type {*}
    */
   BackboneUtility.Routers.ScaffoldRouter = Backbone.Router.extend({
-    collection: null,
-    modelClass: null,
-    parentContainer: null,
     initialize: function(opts){
+      _.defaults(this, {
+        collection: null,
+        modelClass: null,
+        parentContainer: null
+      });
       _.extend(this, opts);
-
     }
   });
 
   BackboneUtility.Routers.ScaffoldViewBasedRouter = BackboneUtility.Routers.ScaffoldRouter.extend({
-
-    modelName:'',
-    pluralModelName:'',
-    tableControlViewClass:BackboneUtility.Views.TableControlView,
-    modelEditViewClass:BackboneUtility.Views.ModelEditView,
-
-    tableColumns:[],
-
-    limit:20,
-    page:1,
-
-    appView:null,
-
     initialize:function (opts) {
       BackboneUtility.Routers.ScaffoldRouter.prototype.initialize.apply(this, arguments);
+
+      _.defaults(this, {
+        modelName:'',
+        pluralModelName:'',
+        tableControlViewClass:BackboneUtility.Views.TableControlView,
+        modelEditViewClass:BackboneUtility.Views.ModelEditView,
+
+        tableColumns:[],
+
+        limit:20,
+        page:1,
+
+        appView:null,
+      });
+
       _.extend(this, opts);
 
       // Set the routes
