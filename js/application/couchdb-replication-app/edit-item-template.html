@@ -1,0 +1,79 @@
+<ul class="breadcrumb">
+  <li><a href="#/replications">Replications</a> <span class="divider">/</span></li>
+  <li class="active">
+    <a href="#/replications/<%= model._id ? (model._id + '/edit') : 'new' %>">
+      <%= model._id ? ('Replication ' + model._id) : 'New replication' %>
+    </a>
+  </li>
+</ul>
+
+<form action="#/replications/<%= model._id ? model._id : 'new' %>" method="POST" class="form-horizontal">
+  <fieldset>
+    <legend><%= model._id ? ('Edit replication ' + model._id) : ('New replication') %></legend>
+    <div class="control-group replication-status-container"></div>
+    <div class="control-group push-pull-replication">
+      <label class="control-label">Push / Pull replication</label>
+
+      <div class="btn-group controls" data-toggle="buttons-radio">
+        <button class="btn active push-replication" rel="popover"
+                type="button"
+                data-content="Push replication sends your changes onto another database."
+                data-original-title="What is Push replication?">Push
+        </button>
+        <button class="btn pull-replication" rel="popover"
+                type="button"
+                data-content="Pull replication receives changes from another database."
+                data-original-title="What is Pull replication?">Pull
+        </button>
+      </div>
+    </div>
+    <div class="control-group pull-replication-content">
+      <label class="control-label" for="replication-<%= model._id ? model._id : 'new' %>-source">Pull from</label>
+
+      <div class="controls">
+        <input id="replication-<%= model._id ? model._id : 'new' %>-source" type="text" name="source"/>
+        <span class="help-inline"></span>
+      </div>
+    </div>
+    <div class="control-group push-replication-content">
+      <label class="control-label" for="replication-<%= model._id ? model._id : 'new' %>-target">Push to</label>
+
+      <div class="controls">
+        <input id="replication-<%= model._id ? model._id : 'new' %>-target" type="text" name="target"/>
+        <span class="help-inline"></span>
+      </div>
+    </div>
+    <div class="control-group push-replication-content">
+      <label class="control-label" for="replication-<%= model._id ? model._id : 'new' %>-create_target">Create
+        target ?</label>
+
+      <div class="controls">
+        <input id="replication-<%= model._id ? model._id : 'new' %>-create_target" type="checkbox"
+               name="create_target" checked="<% if(model.create_target){print('checked');}%>"/>
+        <span class="help-inline"></span>
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="replication-<%= model._id ? model._id : 'new' %>-continuous">Continuous
+        ?</label>
+
+      <div class="controls">
+        <input id="replication-<%= model._id ? model._id : 'new' %>-continuous" type="checkbox" name="continuous"
+               checked="<% if(model.continuous){print('checked');}%>"/>
+        <span class="help-inline"></span>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit" data-loading-text="Starting replication..."
+              data-complete-text="Replication complete!">
+        <i class="icon-refresh"></i>
+        Replicate
+      </button>
+      <button class="btn btn-danger delete" type="button">
+        <i class="icon-trash"></i>
+        Delete & Stop replication
+      </button>
+      <a href="#/replications" class="btn cancel">Cancel</a>
+    </div>
+  </fieldset>
+</form>

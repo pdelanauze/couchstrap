@@ -1,6 +1,6 @@
 define([
   'jquery',
-  'application/couchdb-replication-app',
+  'application/couchdb-replication-app/couchdb-replication-app',
   'application/todo-app'
 ], function ($, CouchDBReplicationApp, TodoApp) {
 

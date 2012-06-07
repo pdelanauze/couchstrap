@@ -1,4 +1,4 @@
-define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-utility', 'lib/backbone-couch-schema-model','../lib/backbone.couchdb'], function (Backbone, _, BackboneModelBinder, Utility, BackboneUtility, BackboneSchemaModel, Backbone) {
+define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-utility', 'lib/backbone-couch-schema-model','lib/backbone.couchdb', 'text!./edit-item-template.html'], function (Backbone, _, BackboneModelBinder, Utility, BackboneUtility, BackboneSchemaModel, Backbone, editItemTemplate) {
 
   var CouchDBReplicationApp = {
     Models:{},
@@ -265,7 +265,7 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
   });
 
   CouchDBReplicationApp.Views.ReplicationEditItemView = BackboneUtility.Views.ModelEditView.extend({
-    template:_.template($("#replication-form-template").html()),
+    template:_.template(editItemTemplate),
     events:{
       'click .push-pull-replication .btn.push-replication':'togglePushReplication',
       'click .push-pull-replication .btn.pull-replication':'togglePullReplication'
