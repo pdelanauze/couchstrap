@@ -12,13 +12,16 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
   BackboneUtility.Views.TableItemView = Backbone.View.extend({
     className:'table-item-view',
     tagName:'tr',
-    modelName:'',
-    pluralModelName:'',
-    template:null,
-    columns:[],
-    events:{},
-    bindings: false,
     initialize:function (options) {
+
+      _.defaults(this, {
+        modelName:'',
+        pluralModelName:'',
+        template:null,
+        columns:[],
+        events:{},
+        bindings:false
+      });
 
       _.extend(this, options);
       _.bindAll(this, 'render', 'doDelete', 'close');
@@ -85,12 +88,15 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
   BackboneUtility.Views.TableView = Backbone.View.extend({
     className:'table table-striped vertical-middle ',
     tagName:'table',
-    modelName:'',
-    pluralModelName:'',
-    columns:[],
-    itemView:BackboneUtility.Views.TableItemView,
-    events:{},
     initialize:function (options) {
+
+      _.defaults(this, {
+        modelName:'',
+        pluralModelName:'',
+        columns:[],
+        itemView:BackboneUtility.Views.TableItemView,
+        events:{}
+      });
 
       _.extend(this, options);
       $(this.el).addClass(this.modelName + '-table-view');
@@ -162,13 +168,16 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
    */
   BackboneUtility.Views.TableControlView = Backbone.View.extend({
     className:'table-control-view',
-    modelName:'',
-    pluralModelName:'',
-    columns:[],
-    tableView:BackboneUtility.Views.TableView,
-    tableViewInstance:null,
-    template:null,
     initialize:function (options) {
+
+      _.defaults(this, {
+        modelName:'',
+        pluralModelName:'',
+        tableView:BackboneUtility.Views.TableView,
+        tableViewInstance:null,
+        template:null,
+        columns:[]
+      });
 
       _.extend(this, options);
       $(this.el).addClass(this.modelName + '-table-control-view');
@@ -254,13 +263,12 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
 
   BackboneUtility.Views.ModelEditView = Backbone.View.extend({
     className:'model-edit-view',
-    modelName:'',
-    pluralModelName:'',
-//    formStructure:{},
-    events:{},
     initialize:function (options) {
 
       _.defaults(options, {
+        modelName:'',
+        pluralModelName:'',
+        events:{},
         formStructure: {}
       });
 
@@ -791,215 +799,6 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       }
     }
 
-  });
-
-  /**
-   *
-   *
-   */
-  BackboneUtility.Routers.RESTishRouter = Backbone.Router.extend({
-
-    possibleStateClasses:[],
-    routes:{},
-    collection:null,
-
-    newItemView:null,
-    editItemView:null,
-    listView:null,
-
-    parentContainerSelector:null,
-    newItemContainer:null,
-    editItemContainer:null,
-    listItemsContainer:null,
-
-    modelName:'',
-    pluralModelName:'',
-    modelClass:null,
-    tableControlView:BackboneUtility.Views.TableControlView,
-    modelEditView:BackboneUtility.Views.ModelEditView,
-
-    tableColumns: [],
-
-    limit:20,
-    page:1,
-
-    initialize:function (options) {
-
-      _.extend(this, options);
-      var parentEl = this.getParentElement();
-      _.defaults(this, {
-        editItemContainer:$('<div class="state edit-state edit-' + this.modelName + '-container"></div>').appendTo(parentEl),
-        newItemContainer:$('<div class="state new-state new-' + this.modelName + '-container"></div>').appendTo(parentEl),
-        listItemsContainer:$('<div class="state list-state list-' + this.pluralModelName + '-container"></div>').appendTo(parentEl)
-      });
-
-      this.possibleStateClasses.push('list-state',
-              'edit-state',
-              'new-state');
-
-      this.route(this.pluralModelName, this.pluralModelName + 'List', this.listItems);
-      this.route(this.pluralModelName + '/*splat', this.pluralModelName + 'ListSplat', this.listItems);
-      this.route(this.pluralModelName + '/new', this.modelName + 'New', this.newItem);
-      this.route(this.pluralModelName + '/:id/edit', this.modelName + 'Edit', this.editItem);
-
-      var schema = this.modelClass.prototype.schema;
-
-      // Prep the columns for the table control view
-      if (this.tableColumns.length === 0 && schema){
-        // Generate the three first from the model's schema
-        for(var key in schema.properties){
-          // Ignore id, rev and type keys
-          if (key !== '_id' && key !== 'type' && key !== '_rev'){
-            this.tableColumns.push({name: Utility.String.capitalize(key), value: key});
-          }
-          if (this.tableColumns.length == 3){
-            break;
-          }
-        }
-      }
-
-    },
-    switchToStateClass:function (el, newClass) {
-      // Set this application as the active one
-      var body = $(document.body);
-      var appContainerMatch = new RegExp(/-app$/);
-      var currentAppClass = this.modelName + '-app';
-      var bodyClasses = body.attr('class') || '';
-      _.each(bodyClasses.split(' '), function(klass){
-        if (appContainerMatch.test(klass) && klass !== currentAppClass){
-          body.removeClass(klass);
-        }
-      });
-      body.addClass(currentAppClass);
-
-      $(el).removeClass(this.possibleStateClasses.join(' ')).addClass(newClass);
-      return this;
-    },
-    getParentElement:function () {
-      return $(this.parentContainerSelector);
-    },
-    listItems:function (query) {
-
-      var ctx = this;
-      var shouldAddToCollection = false;
-      if (query) {
-        var queries = query.split('/');
-        _.each(queries, function (q) {
-          var matches = q.match(/^(p|l)([0-9]+)$/);
-          if (matches) {
-            switch (matches[1]) {
-              case 'p':
-                var newPage = parseInt(matches[2]);
-                if (newPage > ctx.page) {
-                  shouldAddToCollection = true;
-                }
-                ctx.page = newPage;
-                break;
-              case 'l':
-                ctx.limit = parseInt(matches[2]);
-                break;
-            }
-          }
-        });
-      }
-
-      var fetchOpts = {
-        limit:ctx.limit || 20,
-        add:shouldAddToCollection,
-        success:function () {
-          ctx.listView.updateTableInfo({
-            page:ctx.page,
-            limit:fetchOpts.limit
-          });
-        }
-      };
-      if (this.page) {
-        fetchOpts.skip = (this.page - 1) * fetchOpts.limit;
-      }
-
-      this.collection.fetch(fetchOpts);
-
-      var parent = this.getParentElement();
-      this.switchToStateClass(parent, 'list-state');
-
-      if (!this.listView) {
-        this.listView = new this.tableControlView({
-          collection:this.collection,
-          modelName: this.modelName,
-          pluralModelName: this.pluralModelName,
-          columns: this.tableColumns
-        }).render();
-
-        $(this.listItemsContainer, parent).append(this.listView.el);
-      }
-    },
-    newItem:function () {
-      var parent = this.getParentElement();
-      var model = null;
-      this.collection.each(function (item) {
-        if (item.isNew()) {
-          model = item;
-        }
-      });
-
-      if (!model) {
-        model = new this.modelClass();
-      }
-
-      if (this.editItemView){
-        this.editItemView.close();
-        this.editItemView = null;
-      }
-
-      if (!this.newItemView){
-        this.newItemView = new this.modelEditView({
-          model:model,
-          modelName:this.modelName,
-          pluralModelName:this.pluralModelName
-        }).render();
-
-        $(this.newItemContainer, parent).append(this.newItemView.el);
-      }
-
-      this.switchToStateClass(parent, 'new-state');
-    },
-    editItem:function (id) {
-      var ctx = this;
-      var parent = this.getParentElement();
-      var model = this.collection.get(id);
-
-      var renderEditItem = function () {
-        ctx.editItemView = new ctx.modelEditView({
-          model:model,
-          modelName:ctx.modelName,
-          pluralModelName:ctx.pluralModelName
-        }).render();
-
-        $(ctx.editItemContainer, parent).append(ctx.editItemView.el);
-      };
-
-      if (this.editItemView) {
-        this.editItemView.close();
-        this.editItemView = null;
-      }
-
-      // Fetch from the server if this model is not yet in the collection
-      if (!model) {
-        model = new this.modelClass({'_id':id});
-        model.fetch({
-          success:function () {
-            renderEditItem();
-          },
-          error:function () {
-            ctx.navigate("#/" + ctx.pluralModelName);
-          }
-        });
-      } else {
-        renderEditItem();
-      }
-
-      this.switchToStateClass(parent, 'edit-state');
-    }
   });
 
   return BackboneUtility;
