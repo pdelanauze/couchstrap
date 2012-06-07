@@ -39,11 +39,12 @@ define(['jquery', 'underscore', 'backbone', './jquery.couch'], function(jQuery, 
 
           couch._remove(opts);
           method(model.toJSON(), _.extend(opts, {
-            success: function(resp) {
+            success: function(resp, status, xhr) {
               cb.success(_.extend({
                 _id: resp.id,
                 _rev: resp.rev
               }, resp.doc));
+              model.trigger('sync', model, resp, cb);
             },
             error: cb.error
           }));
@@ -64,7 +65,12 @@ define(['jquery', 'underscore', 'backbone', './jquery.couch'], function(jQuery, 
         },
         'delete': function(_db, model, cb) {
           _db.removeDoc(_.extend({ _id: model.id }, model.toJSON()), {
-            success: cb.success,
+            success: function(resp){
+              if (cb.success){
+                cb.success.apply(this, arguments);
+              }
+              model.trigger('sync', model, resp, cb);
+            },
             error: cb.error
           });
         }
