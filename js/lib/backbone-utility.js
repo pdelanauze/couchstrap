@@ -273,7 +273,6 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       });
 
       _.extend(this, options);
-      $(this.el).addClass(this.modelName + '-model-edit-view');
 
       _.defaults(this.events, {
         'submit form':'doSave',
@@ -285,6 +284,8 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       _.bindAll(this, 'render', 'renderForm',
               'doSave', 'doReset', 'doCancel', 'close', 'modelError',
               'modelChanged', 'doDelete');
+
+      this.$el.addClass(this.modelName + '-model-edit-view');
 
       this.model.bind('remove', this.close);
       this.model.bind('change', this.modelChanged);
@@ -341,9 +342,21 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
 
       if (!this.bindings){
         this.bindings = {};
-        _.each(this.formStructure.fields, function(field){
-          this.bindings[field.name] = '[name="' + field.name + '"]';
-        }, this);
+        if (this.formStructure && !_.isEmpty(this.formStructure)){
+          // We can use the form structure
+          _.each(this.formStructure.fields, function (field) {
+            this.bindings[field.name] = '[name="' + field.name + '"]';
+          }, this);
+        } else if (this.model.schema && this.model.schema.properties){
+          // Use the schema
+          _.each(this.model.schema.properties, function(prop, name){
+            var selector = '[name="' + name + '"]';
+            if (this.$(':input' + selector).length > 0){
+              this.bindings[name] = selector;
+            }
+          }, this);
+        }
+
       }
 
       this.modelBinder.bind(this.model, this.el, this.bindings);
