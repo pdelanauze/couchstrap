@@ -1,4 +1,4 @@
-define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-utility'], function (Backbone, _, BackboneModelBinder, Utility, BackboneUtility) {
+define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-utility', 'lib/backbone-couch-schema-model','../lib/backbone.couchdb'], function (Backbone, _, BackboneModelBinder, Utility, BackboneUtility, BackboneSchemaModel, Backbone) {
 
   var CouchDBReplicationApp = {
     Models:{},
@@ -16,50 +16,73 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
    * The _active_tasks channel should be monitored for removals..
    *
    */
-  CouchDBReplicationApp.Models.Replication = Backbone.Model.extend({
-    url:'/replications',
+  CouchDBReplicationApp.Models.Replication = BackboneSchemaModel.extend({
+    url: function(){
+      if (this.isNew()){
+        return '/' + Backbone.couch.options.database + '/';
+      } else {
+        return '/' + Backbone.couch.options.database + '/' + this.get('_id');
+      }
+    },
     defaults:{
-      source:'',
-      target:'',
-      continuous:false,
-      create_target:true,
-      cancel:false,
-      filter:'',
-      query_params:{},
-      doc_ids:[],
-      proxy:'',
-      headers:{},
-      updated_at:new Date()
+      type:'replication',
+//      source:'',
+//      target:''
+    },
+    schema:{
+      description:'Replication item',
+      type:'replication',
+      properties:{
+        source:{
+          name:'source',
+          type:'string',
+          required:true,
+          'default':'The source database'
+        },
+        target:{
+          name:'target',
+          type:'string',
+          required:true,
+          'default':'The target database'
+        },
+        cancel:{
+          name:'cancel',
+          type:'boolean',
+          'default':'Whether this replication should be cancelled and deleted'
+        },
+        continuous:{
+          name:'continuous',
+          type:'boolean',
+          'default':'Whether the replication should be continuous'
+        },
+        filter:{
+          name:'filter',
+          type:'string',
+          'default':'The name of the filter function to use, if any'
+        },
+        create_target: {
+          name: 'create_target',
+          type: 'boolean',
+          'default': false
+        }
+      }
+    },
+    initialize: function(){
+      BackboneSchemaModel.prototype.initialize.apply(this, arguments);
+      this.on('sync', this.onSync, this);
+    },
+    onSync: function(model, response, options){
+      if (!options.ignoreReplicator){
+        if(!model.get('cancel')){
+          model.sendToReplicator();
+        } else {
+          model.deleteFromReplicator();
+        }
+      }
     },
     destroy:function () {
       this.set({cancel:true});
       Backbone.Model.prototype.destroy.call(this);
-    },
-    validate:function (attributes) {
-      var errors = {};
-      var isValid = true;
-
-      // It's persisted, so it's valid ...
-      _.each(attributes, function (v, k) {
-        switch (k) {
-          case 'source':
-            if (!v || v.trim().length == 0) {
-              errors['source'] = 'is required';
-              isValid = false;
-            }
-            break;
-          case 'target':
-            if (!v || v.trim().length == 0) {
-              errors['target'] = 'is required';
-              isValid = false;
-            }
-            break;
-        }
-      });
-
-      if (!isValid) {
-        return errors;
-      }
     },
     /**
      * Sends this request to the replicator
@@ -130,6 +153,7 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
         }, error:function (xhr, textStatus, errorThrown) {
           var data = $.parseJSON(xhr.responseText);
           model.unset('last_replication_status');
+          // TODO Handle exception (unauthorized)
           model.save({
             error:data.error,
             reason:data.reason
@@ -144,6 +168,9 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
      */
     deleteFromReplicator:function (opts) {
       var model = this;
+      if (!opts){
+        opts = {};
+      }
       if (model.get('continuous')) {
         var json = model.toJSON();
         var data = {
@@ -181,41 +208,28 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
 
       // First whether we should sync to the replicator database after saving this model
       if (method === 'update' || method === 'create') {
-
         model.set({
           updated_at:new Date()
         });
-
-        // Extend the success function of this saved model to trigger a request to the replicator
-        if (!options.ignoreReplicator) {
-          // We're using a 'complete' callback here otherwise the success callback from backbone-couchdb gets
-          // overwritten
-          options.complete = function () {
-            // Now update the replicator database
-            model.sendToReplicator();
-          }
-        }
       }
-
-      if (method === 'delete' && !options.ignoreReplicator) {
-        model.deleteFromReplicator({
-          success:function (model) {
-            return Backbone.sync(method, model, options);
-          },
-          error:function (model) {
-            console.log('Detected an error trying to delete the replication entry from the couchdb replicator', arguments);
-            return Backbone.sync(method, model, options);
-          }
-        });
-      } else {
-        return Backbone.sync(method, model, options);
-      }
+      return Backbone.couch.sync(method, model, options);
     }
   });
 
-  CouchDBReplicationApp.Collections.ReplicationCollection = Backbone.Collection.extend({
+  CouchDBReplicationApp.Collections.ReplicationCollection = Backbone.couch.Collection.extend({
     model:CouchDBReplicationApp.Models.Replication,
-    url:'/replications'
+    change_feed:true,
+    couch:function () {
+      return {
+        view:Backbone.couch.options.design + '/by_type',
+        key:'replication',
+        include_docs:true
+      }
+    },
+    initialize:function () {
+      this._db = Backbone.couch.db(Backbone.couch.options.database);
+      Backbone.couch.Collection.prototype.initialize.apply(this, arguments);
+    }
   });
 
   CouchDBReplicationApp.Views.ReplicationTableItemView = BackboneUtility.Views.TableItemView.extend({
@@ -252,38 +266,37 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
 
   CouchDBReplicationApp.Views.ReplicationEditItemView = BackboneUtility.Views.ModelEditView.extend({
     template:_.template($("#replication-form-template").html()),
-    handleFileAttachments:false,
     events:{
       'click .push-pull-replication .btn.push-replication':'togglePushReplication',
       'click .push-pull-replication .btn.pull-replication':'togglePullReplication'
     },
     initialize:function (options) {
-      BackboneUtility.Views.ModelEditView.prototype.initialize.call(this, options);
+      BackboneUtility.Views.ModelEditView.prototype.initialize.apply(this, arguments);
 
       this.model.bind('change', this.render);
       _.bindAll(this, 'togglePushReplication', 'togglePullReplication');
     },
     renderForm:function () {
-      BackboneUtility.Views.ModelEditView.prototype.renderForm.call(this);
+      BackboneUtility.Views.ModelEditView.prototype.renderForm.apply(this, arguments);
 
       // Add the push / pull popover explanations
       this.$('.push-pull-replication .btn[rel="popover"]').popover();
 
       var m = this.model;
 
-      if (m.get('target') === Backbone.couch_connector.config.db_name) {
-        $(this.el).removeClass('push-replication').addClass('pull-replication');
+      if (m.get('target') === Backbone.couch.options.database) {
+        this.$el.removeClass('push-replication').addClass('pull-replication');
         this.$('.control-group.push-pull-replication .btn-group .btn').removeClass('active').filter('.pull-replication').addClass('active');
       } else {
-        $(this.el).removeClass('pull-replication').addClass('push-replication');
+        this.$el.removeClass('pull-replication').addClass('push-replication');
         this.$('.control-group.push-pull-replication .btn-group .btn').removeClass('active').filter('.push-replication').addClass('active');
       }
     },
     doSave:function () {
-      if ($(this.el).hasClass('push-replication')) {
-        this.model.set({source:Backbone.couch_connector.config.db_name});
+      if (this.$el.hasClass('push-replication')) {
+        this.model.set({source:Backbone.couch.options.database});
       } else {
-        this.model.set({target:Backbone.couch_connector.config.db_name, create_target:false});
+        this.model.set({target:Backbone.couch.options.database, create_target:false});
       }
 
       var submitButton = this.$(':input[type=submit]');
@@ -306,9 +319,9 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
       var m = this.model;
 
       if (m.isNew()){
-        $(this.el).addClass('new-state');
+        this.$el.addClass('new-state');
       } else {
-        $(this.el).removeClass('new-state');
+        this.$el.removeClass('new-state');
       }
 
       // Also render some status messages
@@ -346,30 +359,34 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
       return BackboneUtility.Views.ModelEditView.prototype.close.call(this);
     },
     togglePushReplication:function () {
-      $(this.el).removeClass('pull-replication').addClass('push-replication');
+      this.$el.removeClass('pull-replication').addClass('push-replication');
       return true;
     },
     togglePullReplication:function () {
-      $(this.el).removeClass('push-replication').addClass('pull-replication');
+      this.$el.removeClass('push-replication').addClass('pull-replication');
       return true;
     }
   });
 
-  CouchDBReplicationApp.Routers.ReplicationRouter = BackboneUtility.Routers.RESTishRouter.extend({
+  CouchDBReplicationApp.Routers.ReplicationRouter = BackboneUtility.Routers.ScaffoldViewBasedRouter.extend({
     modelName:'replication',
     pluralModelName:'replications',
+    parentContainer: $("#apps-container").append('<div class="replication-app-container"></div>'),
     modelClass:CouchDBReplicationApp.Models.Replication,
-    tableControlView:CouchDBReplicationApp.Views.ReplicationTableControlView,
-    modelEditView:CouchDBReplicationApp.Views.ReplicationEditItemView,
+    tableControlViewClass:CouchDBReplicationApp.Views.ReplicationTableControlView,
+    modelEditViewClass:CouchDBReplicationApp.Views.ReplicationEditItemView,
     initialize:function (options) {
 
       this.collection = new CouchDBReplicationApp.Collections.ReplicationCollection();
 
-      BackboneUtility.Routers.RESTishRouter.prototype.initialize.call(this, options);
+      BackboneUtility.Routers.ScaffoldViewBasedRouter.prototype.initialize.apply(this, arguments);
+
+      // Add the links to the application
+      $('.navbar-fixed-top ul.nav').append('<li class="replications"><a href="#/' + this.pluralModelName + '">' + Utility.String.capitalize(this.pluralModelName) + '</a></li>');
 
     },
     listItems:function (params) {
-      BackboneUtility.Routers.RESTishRouter.prototype.listItems.call(this, params);
+      BackboneUtility.Routers.ScaffoldViewBasedRouter.prototype.listItems.apply(this, arguments);
       $('.navbar-fixed-top ul.nav').children('li').removeClass('active').filter('.replications').addClass('active');
     }
   });
