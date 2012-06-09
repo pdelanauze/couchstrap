@@ -559,6 +559,13 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
         this.appView = new BackboneUtility.Views.AppView({el:this.parentContainer});
         this.appView.render();
       }
+
+      // Add the links to the application
+      var indexHref =  '#/' + this.pluralModelName;
+      var navBar = $('.navbar-fixed-top ul.nav');
+      if ($('[href="' + indexHref + '"]', navBar).length === 0){
+        navBar.append('<li><a href="' + indexHref+ '">' + Utility.String.capitalize(this.pluralModelName) + '</a></li>');
+      }
     },
 
     listItems:function (query) {

@@ -378,11 +378,7 @@ define(['backbone', 'underscore', 'modelbinder', 'lib/utility', 'lib/backbone-ut
     initialize:function (options) {
 
       this.collection = new CouchDBReplicationApp.Collections.ReplicationCollection();
-
       BackboneUtility.Routers.ScaffoldViewBasedRouter.prototype.initialize.apply(this, arguments);
-
-      // Add the links to the application
-      $('.navbar-fixed-top ul.nav').append('<li class="replications"><a href="#/' + this.pluralModelName + '">' + Utility.String.capitalize(this.pluralModelName) + '</a></li>');
 
     },
     listItems:function (params) {

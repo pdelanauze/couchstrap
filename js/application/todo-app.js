@@ -75,9 +75,6 @@ define(['underscore', 'backbone', '../lib/utility', '../lib/backbone-utility', '
     initialize: function(opts){
       BackboneUtility.Routers.ScaffoldViewBasedRouter.prototype.initialize.apply(this, arguments);
       this.collection = new TodoApp.Collections.TodoCollection();
-
-      // Add the links to the application
-      $('.navbar-fixed-top ul.nav').append('<li><a href="#/' + this.pluralModelName + '">' + Utility.String.capitalize(this.pluralModelName) + '</a></li>');
     }
   });
 
