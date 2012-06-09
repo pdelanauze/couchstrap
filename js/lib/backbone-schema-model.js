@@ -9,8 +9,14 @@ define(['underscore', 'backbone', 'lib/simple-json-schema'], function (_, Backbo
 
   var BackboneSchemaModel = Backbone.Model.extend({
     schema: false,
-    validate: function(attributes){
-      var report = SimpleJsonSchema.validate(attributes, this.schema, true);
+    validate: function(attributes, options){
+
+      if (!options){options = {};}
+      _.defaults(options, {
+        partialValidation: true
+      });
+
+      var report = SimpleJsonSchema.validate(attributes, this.schema, options.partialValidation);
 
       if (!report.isValid){
         return report;

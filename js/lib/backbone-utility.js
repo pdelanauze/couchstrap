@@ -402,12 +402,19 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     doSave:function () {
       var ctx = this;
       try {
-        this.model.save(null, {
-          success:function () {
-            ctx.close();
-            window.location.href = '#/' + ctx.pluralModelName;
-          }
-        });
+
+        var m = ctx.model;
+        var report = m.validate(m.attributes, {partialValidation: false});
+        if (!report){
+          m.save(null, {
+            success:function () {
+              ctx.close();
+              window.location.href = '#/' + ctx.pluralModelName;
+            }
+          });
+        } else {
+          ctx.modelError(m, report);
+        }
       } catch (e) {
         // TODO Fix me ... If something wrong happens, we should display a message to the user...
         console.log('error', e);
