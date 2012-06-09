@@ -242,16 +242,16 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       this.$('.btn.show-more').attr('href', href);
 
       if (hasMore) {
-        this.$('.btn.show-more').show();
+        this.$('.btn.show-more').closest('tr').show();
       } else {
-        this.$('.btn.show-more').hide();
+        this.$('.btn.show-more').closest('tr').hide();
       }
 
       if (hasItemsNotShown) {
         var lessHref = '#/' + this.pluralModelName + '/p' + (options.page - 1);
-        this.$('.btn.show-less').attr('href', lessHref).show();
+        this.$('.btn.show-less').attr('href', lessHref).closest('tr').show();
       } else {
-        this.$('.btn.show-less').hide();
+        this.$('.btn.show-less').closest('tr').hide();
       }
     },
     close:function () {
