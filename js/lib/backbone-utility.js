@@ -31,7 +31,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       });
       this.delegateEvents();
 
-      this.model.bind('remove', this.close);
+      this.model.on('remove', this.close, this);
 
       // Create the template
       if (!this.template) {
@@ -78,7 +78,8 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     close:function () {
       this.remove();
       this.unbind();
-      this.modelBinder.unbind(this);
+      this.model.off(null, null, this);
+      this.modelBinder.unbind();
     }
   });
 
@@ -95,15 +96,16 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
         pluralModelName:'',
         columns:[],
         itemView:BackboneUtility.Views.TableItemView,
-        events:{}
+        events:{},
+        children: []
       });
 
       _.extend(this, options);
       $(this.el).addClass(this.modelName + '-table-view');
 
       _.bindAll(this, 'render', 'itemAdded');
-      this.collection.bind('add', this.itemAdded);
-      this.collection.bind('reset', this.render);
+      this.collection.on('add', this.itemAdded, this);
+      this.collection.on('reset', this.render, this);
 
       if (!this.columns || this.columns.length == 0) {
         var schema = this.collection.model.prototype.schema;
@@ -152,10 +154,15 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       }).render();
 
       this.$('tbody:first').append(itemView.el);
+      this.children.push(itemView);
     },
 
     close:function () {
+      _.each(this.children, function(c){
+        c.close();
+      });
       this.remove();
+      this.collection.off(null, null, this);
       this.unbind();
     }
   });
@@ -199,7 +206,7 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       }
 
       _.bindAll(this, 'render', 'updateTableInfo');
-      this.collection.on('pagechanged', this.updateTableInfo);
+      this.collection.on('pagechanged', this.updateTableInfo, this);
     },
     render:function () {
       this.tableViewInstance.render();
@@ -255,9 +262,10 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       }
     },
     close:function () {
+      this.tableViewInstance.close();
       this.remove();
       this.unbind();
-      this.collection.off('pagechanged', this.updateTableInfo);
+      this.collection.off(null, null, this);
     }
   });
 
@@ -287,9 +295,9 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
 
       this.$el.addClass(this.modelName + '-model-edit-view');
 
-      this.model.bind('remove', this.close);
-      this.model.bind('change', this.modelChanged);
-      this.model.bind('error', this.modelError);
+      this.model.on('remove', this.close, this);
+      this.model.on('change', this.modelChanged, this);
+      this.model.on('error', this.modelError, this);
 
       this.delegateEvents();
 
@@ -446,7 +454,8 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
     close:function () {
       this.remove();
       this.unbind();
-      this.modelBinder.unbind(this);
+      this.model.off(null, null, this);
+      this.modelBinder.unbind();
     }
   });
 
@@ -488,6 +497,13 @@ define(['jquery', 'underscore', 'backbone', 'modelbinder', 'lib/utility'], funct
       });
       body.addClass(currentAppClass);
       return this;
+    },
+    close: function(){
+      this.remove();
+      this.off();
+      if (this.appView){
+        this.appView.close();
+      }
     }
   });
 
