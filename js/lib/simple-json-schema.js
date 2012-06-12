@@ -229,7 +229,7 @@ define(function () {
 
       if (prop.required && (typeof value === 'undefined' || (typeof value === 'string' && value.trim().length === 0))) {
         errors.push({property:key, error:sjs.messages.isRequired});
-      } else {
+      } else if (typeof value !== 'undefined'){
         // Run the format validator if any
         var errorString = false;
         if (sjs.validators[prop.format]) {
